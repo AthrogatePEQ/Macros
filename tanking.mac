@@ -1,0 +1,692 @@
+| File: Tanking Macro
+| This is the Macro I run on my Warrior.
+|
+| Version: 
+| 1.0
+|
+| Topic: Example Commands
+| /echo update macro aliases - Causes e3 to rebuild the MQ2 aliases in the MacroQuest.ini file.
+| /assistme - Causes all bots running e3 to Assist "Me" on the TARGET that I have targetd.
+| /backoff - Causes all the bots running e3 to Stop Attacking and Clear their target.
+| /loadexp Main - Load Experience Group using the "Main" Template in the ExpGroup.ini file. (See <ExpGroup>)
+| /echo DoLessons - Causes toons in the Experience Group (built using the /loadexp command to fire their Lesson of the Devoted).
+|
+| Topic: Auto Kill
+| When using the <Tanking Macro> you by using "/bc Assist On TARGET" the macro will loop 
+| through the mobs that are on the XTarget bar and Kill them all.
+|
+| Topic: Kill Last
+| When using the <Tanking Macro> when the <Auto Kill> is processing the NPCs if the "Next NPC" is 
+| on the Kill Last List in the <Tanking.ini> file for the current zone then it will be skipped until
+| only mobs on the Kill Last List are left.  This is especially useful in zones like PoWater during 
+| the Coirnav event or PoTime Phase 1,2,3.
+|
+| Topic: Tanking.ini
+|(start code)
+|[powater]
+|Kill Last#1=Pwelon_of_Vapor
+|Kill Last#2=Nrinda_of_Ice
+|Kill Last#3=Vamuil_of_Water 
+|
+|[inktuta]
+|Kill Last#1=Nijaka_the_Scourge
+|Kill Last#2=#Mimezpo_the_Oracle
+|(end)
+
+#include e3 Includes\e3_Utilities.inc
+#include e3 Includes\e3_ExpGroup.inc
+#include ath_lib.inc
+|#include e3 Includes\e3_Modes.inc
+#include e3 Includes\e3_Basics.inc
+#include e3 Includes\e3_SmoothMoves.inc
+#include e3 Includes\e3_Casting.inc
+#include e3 Includes\e3_Assists.inc
+#include e3 Includes\e3_AutoExpAdjust.inc
+#include e3 Includes\e3_BlockBuffs.inc
+
+#event AssistStart "<#*#> Assist on #1#"
+#event RotateExpGroup1 "[MQ2] RotateExpGroup"
+#event RotateExpGroup2 "[MQ2] RotateExpGroup #1#"
+#event DoLessons "[MQ2] DoLessons#*#"
+#event DoAutoKill "[MQ2] AutoKill #1#"
+#event ShowExpGroup "[MQ2] ShowExpGroup"
+#event StopClearXTarget "[MQ2] StopClearXTarget"
+#event UpdateTankingAliases "[MQ2] Update tanking aliases"
+
+| Subroutine: Main
+| This is the entry point of the macro.
+Sub Main
+  /declare MacroData_Ini string outer e3Data.ini
+  /declare MaxXTargets int local 5
+  /if (${Me.AltAbility[Eyes Wide Open].AARankRequired}) {
+    /varcalc MaxXTargets ${MaxXTargets}+${Me.AltAbility[Eyes Wide Open].AARankRequired}
+  }
+
+  /declare IniMode string outer
+  /varset IniMode Ini
+
+  |/declare Character_Ini string Bot Inis\${MacroQuest.Server}-${Me.CleanName}
+  /declare Character_Ini string e3 Bot Inis\\PEQTGC-${Me.CleanName}
+  /declare genSettings_Ini string outer ${Ini[${MacroData_Ini},File Paths,General Settings]}
+  /echo ${Character_Ini}
+  |/echo ${genSettings_Ini}
+
+  /if (${Ini[${Character_Ini},Buffs,Self Buff#1].Length}) /call IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
+
+  /declare ChatToggle string outer /bc
+
+  /call Basics_Setup
+  /call SmoothMoves_Setup
+  /call BlockBuffsAtStartup
+  
+  /declare killingStuff int outer 0
+  /declare checkSpawn spawn outer
+  /declare i int local 0
+  /declare currentExpGroup string outer
+  /declare autoKill int outer 0
+  /if (!${Defined[LessonTimer]}) /declare LessonTimer timer global 0
+  /call LoadExpRot
+  /declare killCount int outer 0
+  /declare Debug int outer 0
+  /declare killTargetID int outer 0
+  /declare ZoneID int outer 0
+  /if (!${Defined[KillLastString]}) /declare KillLastString string outer
+  |/call #IniToArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
+  |/declare pendingCast string outer
+  |/declare lastCast string outer
+  |/declare castReturn string outer
+  /call Casting_Setup
+  /call assist_Setup
+
+  /call #IniToArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
+  /declare combatTimer timer outer
+
+  /declare ActionTaken bool outer FALSE
+  /declare lessonsReady string outer
+  /declare barkedForLessons bool outer FALSE
+  /declare npc int local
+  /declare tilde_loc int local
+
+
+  :MainLoop
+    /doevents
+    /if (!${Me.Casting.ID} && !${Me.Combat} ) /call BuffSelf
+
+    /if (${Zone.ID} != ${ZoneID}) {
+      |Zoned - Reread the configuration File.
+      /varset ZoneID ${Zone.ID}
+      /if (${Ini[tanking.ini,${Zone.ShortName},Kill Last#1].Length}) /call IniToArray "tanking.ini,${Zone.ShortName},Kill Last#" KillLastList
+      |/if (${Ini[tanking.ini,potimeb,Kill First#1].Length}) /call IniToArray "tanking.ini,potimeb,Kill First#" KillFirstList
+      
+      /if (${Defined[KillLastString]}) /deletevar KillLastString
+      /call #ArrayToString KillLastString KillLastList
+      /varset KillLastString ${KillLastString.Replace[_, ]}
+    }
+
+    :KillLoop
+    /doevents StopClearXTarget
+    /doevents EnrageOn
+    /doevents EnrageOff
+
+    /varset AssistTarget ${Target.ID}
+    /if (!${Me.Casting.ID} && ${Me.Combat} && ${MyAbilities.Size}) /call CombatAbilities
+
+    /varset npc 0
+    /varset i 0
+    :GetNextNPC
+
+    /if (!${Spawn[npc id ${killTargetID}].ID} && ${killingStuff}) {
+      /varcalc i ${i}+1
+
+      /varset npc ${NearestSpawn[${i},npc radius 50 zradius 25 los noalert ${AlertList}].ID}
+      /if ( ${npc} && ${npc} != 0 && ${Select[${Spawn[id ${npc}].Type},${AcceptableTargetTypes}]}) {
+        /varset tilde_loc ${Spawn[id ${npc}].CleanName.Find[`s pet]}
+        /if (${tilde_loc} > 0) {
+          /if (${Spawn[pc ${Spawn[id ${npc}].CleanName.Left[${Math.Calc[${tilde_loc}-1].Int}]}].ID}) /goto :GetNextNPC
+        }
+
+        /vardata checkSpawn Spawn[npc id ${npc}]
+        /if ( ${KillLastString.Find[${checkSpawn.CleanName}]} ) /goto :GetNextNPC
+
+        /if (${checkSpawn.ID}) {
+          /target id ${checkSpawn.ID}
+          /delay 10 ${Target.ID}==${checkSpawn.ID}
+          /attack on
+          /stick 10 front
+          /varset killTargetID ${checkSpawn.ID}
+          /assistme
+          /delay 3
+          /goto :KillLoop
+        }
+      } else {
+        /bc End of Killing Spree
+        /goto :Reset
+      }
+    }
+    /delay 3
+    /goto :MainLoop
+    :Reset
+    /varset killingStuff 0
+    /varset killTargetID 0
+    /doevents flush AssistStart
+    /goto :MainLoop
+/return
+
+Sub Event_StopClearXTarget
+  /varset killingStuff 0
+  /varset killTargetID 0
+  /varset killCount 0
+  /doevents flush AssistStart
+/return
+
+Sub Event_DoAutoKill(line, args)
+  /varset autoKill ${args}
+  /echo AutoKill: ${Bool[${args}]}
+/return
+
+| Subroutine: AssistStart
+| AssistMe and <Auto Kill>.
+|
+| Example: Assist On TARGET
+| /bc "<#*#> Assist on #1#"
+Sub Event_AssistStart(line, id)
+  /varset killingStuff 1
+  /varset killTargetID ${id}
+  /varset killCount 0
+/return
+
+Sub Event_RotateExpGroup1
+  /call DoRotateExpGroup 3
+/return
+
+Sub Event_RotateExpGroup2(line, count)
+  /call DoRotateExpGroup ${count}
+/return
+
+Sub Event_UpdateTankingAliases
+  /alias /autokill /echo AutoKill
+  /alias /dolessons /echo DoLessons
+  /alias /loadexp /echo loadexpgroup
+  /alias /rotexpgroup /echo RotateExpGroup
+  /alias /rotateexpgroup /echo RotateExpGroup
+  /alias /stopkilling /echo StopClearXTarget
+  /alias /showexpgroup /echo ShowExpGroup
+  /alias /lessonready /if (${Me.AltAbilityReady[Lesson of the Devoted]}) /bc Lesson Ready Now
+/return
+
+#Event LessonReadyNow "<#1#> Lesson Ready Now"
+Sub Event_LessonReadyNow(line, ChatSender, args)
+
+   /if ( ${lessonsReady.Length} < 1 ) {
+      /varset lessonsReady ${ChatSender}
+   } else {
+      /varset lessonsReady ${lessonsReady}|${ChatSender}
+   }
+
+|/echo ${lessonsReady}
+/return ${lessonsReady}
+
+
+#Event BarkLessonsReady "[#1#] Bark Lesson Ready"
+Sub Event_BarkLessonsReady
+
+  /varset lessonsReady
+  /declare i int local 0
+  /for i 0 to ${rotNames.Count[|]}
+   /squelch /bct ${rotNames.Arg[${i},|]} //lessonready
+  /next i
+
+  /varset barkedForLessons TRUE
+/return
+
+Sub DoRotateExpGroup(count)
+  /echo LoadExpGroup Main
+
+/return
+
+Sub Event_ShowExpGroup
+
+  /if (${lastRotation}>${rotSize}) /varcalc lastRotation ${lastRotation}-${rotSize}
+
+  /declare newGroup string local ${staticGroup}
+  /echo staticGroup=${staticGroup}
+  |/echo remainingGroupSize=${remainingGroupSize}
+  /declare i int local 0
+  /declare j int local 0
+  /declare thisGroupMember string local
+  /if (${remainingGroupSize}) {
+    /for i 1 to ${remainingGroupSize}
+      /varcalc j ${lastRotation}+${i}
+      /if (${j}>${rotSize}) /varcalc j ${j}-${rotSize}
+      /varset thisGroupMember ${rotNames.Arg[${j},|]}
+      /if (${staticGroup.Length} || ${i}>1) {
+        /varset newGroup ${newGroup}|${thisGroupMember}
+      } else {
+        /varset newGroup ${thisGroupMember}
+      }
+    /next i
+  }
+  /echo ExpGroup: ${newGroup}
+
+/return
+
+Sub Event_DoLessons(line)
+  /declare i int local 0
+  /for i 1 to 6
+    /if (!${NetBots[${CurrentExpGroup.Arg[${i}, ]}].FreeBuffSlots}) {
+      /echo ${CurrentExpGroup.Arg[${i}, ]} has no free buff slots.
+      /if (!${line.Find[-force]}) /return
+    }
+  /next i
+
+|/for i 1 to 6
+|  /bct ${CurrentExpGroup.Arg[${i}, ]} //casting "Lesson of the Devoted" alt -maxtries|3
+|/next i
+  /bc ForceCast Lesson of the Devoted /only|${CurrentExpGroup}
+  /varset LessonTimer 18030
+/return
+
+Sub LoadExpRot
+  /declare lastRotation int outer ${Ini[Tanking.ini,ExpRot,LastRotation,0]}
+  /declare staticGroup string outer ${Ini[Tanking.ini,ExpRot,Static,]}
+  /declare rotNames string outer ${Ini[Tanking.ini,ExpRot,Rotate]}
+  /declare staticSize int outer ${Math.Calc[${staticGroup.Count[|]}+1]}
+  /if (!${staticGroup.Length} || ${staticGroup.Equal[NULL]}) {
+    /varset staticSize 0
+    /varset staticGroup
+  }
+  /declare rotSize int outer ${Math.Calc[${rotNames.Count[|]}+1]}
+  /declare remainingGroupSize int outer ${Math.Calc[6-${staticSize}]}
+/return
+
+
+#event BuffAll "<#*#>#*#Buff All"
+Sub Event_BuffAll(line)
+  /bc Buff me
+/return
+
+| Based on killian's e3 IniToArray
+| Primary difference is this always creates the array, 0 index if nothing to return
+Sub GetIniArray(File, Section, Key, ArrayName, ArrayScope)
+  /declare i int local 1
+  /declare IniKey ${File},${Section},${Key}
+  /if (${Defined[${ArrayName}]}) /deletevar ${ArrayName}
+  /if (${Ini[${IniKey}1].Length}) {
+    /echo Ini[${IniKey}1] = ${Ini[${IniKey}1]}
+    /declare count int local 0
+    :NextKey
+      /if (${Ini[${IniKey}${i}].Length}) {
+        /varset count ${i}
+        /varcalc i ${i}+1
+        /goto :NextKey
+      }
+    /echo count: ${count}
+    /declare ${ArrayName}[${count}] string ${ArrayScope}
+    /for i 1 to ${count}
+      /varset ${ArrayName}[${i}] ${Ini[${IniKey}${i}]}
+      /echo Ini[${IniKey}${i}] = ${Ini[${IniKey}${i}]}
+    /next i
+  } else {
+    /declare ${ArrayName}[0] string ${ArrayScope}
+  }
+/return
+
+|------------------------------------------------|
+| Subroutine: buffSelf
+| Cast and maintain buffs on this character.   
+|------------------------------------------------|
+SUB buffSelf
+/if (${Debug} || ${Debug_BuffCheck}) /echo |- buffSelf ==>
+
+   /if (${Me.Combat} || ${Me.Moving} || ${Me.XTarget} || (${Defined[LessonTimer]} && ${LessonTimer}>0)) /return
+
+   | -Declare local variables.
+   /declare castName string local
+   /declare buffName string local
+   /declare gemNumber int local ${DefaultGem}
+
+   /declare SelfBuff_i int local
+
+   /for SelfBuff_i 1 to ${SelfBuffs.Size}
+
+      /varset castName ${SelfBuffs[${SelfBuff_i}].Arg[1,/]}
+      /varset buffName ${If[${Me.Book[${castName}]} || ${Me.AltAbility[${castName}]},${castName},${FindItem[${castName}].Spell}]}
+
+      |  /BuffName Check.
+      /if (${SelfBuffs[${i}].Find[/buffname|]}) {
+         /call argueString buffname "${SelfBuffs[${i}]}"
+         /varset buffName ${Macro.Return}
+      }
+
+      |  /BuffName Check.
+      /if (${SelfBuffs[${i}].Find[/CheckFor|]}) {
+         /call argueString CheckFor "${SelfBuffs[${i}]}"
+         /varset buffName ${Macro.Return}
+      }
+
+      | Check if the buff stacks
+      /if (!${Spell[${buffName}].Stacks}) {
+         /if (${Debug} || ${Debug_BuffCheck}) /echo [${castName}] will not stack, skipping.
+      } else {
+
+         | Check buff duration
+         /if (${Me.Buff[${buffName}].Duration} > 10) {
+            /if (${Debug} || ${Debug_BuffCheck}) /echo [${Me.Buff[${buffName}].Duration}] ticks left on [${buffName}(${castName})].
+         } else {
+            /if (${Me.FreeBuffSlots} > 0 ) {
+              | Cast the buff
+              |/call e3_Cast ${If[${Spell[${buffName}].TargetType.Equal[self]},0,${Me.ID}]} "${SelfBuffs[${i}]}/GiveUpTimer|${If[!${Me.Book[${castName}]},0,${If[${Me.Gem[${castName}]},20,90]}]}"
+
+              /casting "${SelfBuffs[${SelfBuff_i}]}"
+            }
+          }
+      }
+
+   /next SelfBuff_i
+
+/if (${Debug} || ${Debug_BuffCheck}) /echo <== buffSelf -|
+/RETURN
+
+
+|------------------------------------------------------------|
+|- Turns off attack, when a mob you're attacking enrages.   -|
+|------------------------------------------------------------|
+#event EnrageOn "#1# has become ENRAGED."
+SUB Event_EnrageOn(line, RageOn)
+/if (${Debug} || ${Debug_Assists}) /echo Enrage ON, turning attack OFF
+   /if (${Me.Combat} && ${Target.ID} == ${Spawn[${RageOn}].ID} && ${Target.PctHPs} < 20) {
+      |/if (${AssistStickPoint.Equal[behind]} && (${Stick.Behind} || ${Stick.MoveBehind}) ) /return
+
+      /attack off
+      /if (${Me.Pet.ID}) /pet back off
+      /if (!${Defined[enrageHold]}) /declare enrageHold bool outer TRUE
+   }
+/RETURN
+
+|------------------------------------------------|
+|- Turns attack back on, after enrage is over.  -|
+|------------------------------------------------|
+#event EnrageOff "#1# is no longer enraged."
+SUB Event_EnrageOff(line, RageOn)
+/if (${Debug} || ${Debug_Assists}) /echo Enrage OFF, turning attack ON
+   /if (${enrageHold} && ${Target.ID} == ${Spawn[${RageOn}].ID}) {
+      /attack on
+      /if (${Me.Pet.ID}) /pet attack
+      /deletevar enrageHold
+   }
+/RETURN
+
+| |------------------------------------------------|
+| |- Recalls groups saved in your Groups.ini.     -|
+| |------------------------------------------------|
+| |- Use, /group 'Name', or, /bc Group 'Name'. -|
+| |------------------------------------------------|
+| #EVENT groupUp "<#1#> Group #2#"
+| SUB EVENT_groupUp(line, ChatSender, eventParams)
+| /if (${Debug}) /echo |- EVENT_groupUp ==>
+| | 
+|    /if (!${Defined[Group_Ini]}) {
+|       /declare Group_Ini string outer ${Ini[e3Data.ini,File Paths,Saved Groups]}
+|    }
+|   
+|    | -Verify the event
+|    /call verifyEvent "${ChatSender}" "${line}"
+|    /varset ChatSender ${Macro.Return.Arg[1,_]}
+|    |    |-----------Valid User----------|    |--------Included Bot-----------|
+|    /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+| | 
+|       /if (${ChatSender.Equal[${Me.Name}]}) {
+|         /bcaa //raiddisband
+|         /bcaa //disband
+|       }
+| | 
+|       /declare groupName string local ${eventParams.Arg[1,/]}
+|       /if (${groupName.Right[1].Equal[ ]}) /varset groupName ${groupName.Left[${Math.Calc[${groupName.Length}-1]}]}
+|       /declare groupFound string local
+|       /declare groupMembers[5] string local
+|       /declare groupSize int local
+| | 
+|       /declare i int local 1
+|       /declare e int local
+| | 
+|       | -Check for groupName in Group_Ini.
+|       :nextGroupListing
+|       /if (${Ini[${Group_Ini}].Arg[${i},|].Arg[2,_].Equal[${groupName}]} && ${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#0].NotEqual[DEPRECATED]}) {
+|          | Disband from a current group
+|          |/if (${Group}) /call EVENT_Disband "PLACEHOLDER" "${Me.CleanName}"
+| | 
+|             | check to see if I am the group leader(GroupMember#0)
+|             /if (${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#0].Equal[${Me.CleanName}]}) {
+|             /echo Recalling [${groupName}]...
+|             /delay 20
+|             /delay 50
+|                | Invite group members while ignoring placeholders, and set
+|                /for e 1 to 5
+|                   /varset groupMembers[${e}] ${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
+|                   /if (${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#${e}].NotEqual[PLACEHOLDER]}) {
+|                      /varcalc groupSize ${groupSize}+1
+|                      | -Alert PC of incoming group invite.
+|                      /invite ${groupMembers[${e}]}
+|                   }
+|                /next e
+| | 
+|                /delay 100 ${Group} == ${groupSize}
+|                /if (${Group} != ${groupSize}) {
+|                   /for e 1 to 5
+|               /if (${groupMembers[${e}].NotEqual[PLACEHOLDER]} && !${Group.Member[${groupMembers[${e}]}]}) /echo [${groupMembers[${e}]}] Did not join the group...
+|                   /next e
+|                }
+|             /goto :skip
+|             }
+|          }
+|       /varcalc i ${i}+1
+|       /if (${Ini[${Group_Ini}].Arg[${i},|].Length}) /goto :nextGroupListing
+|       }
+| :skip
+| /if (${Debug}) /echo <== EVENT_groupUp -|
+| /RETURN
+
+| |----------------------------------------|
+| |- Disband bots from group and raid.   -|
+| |----------------------------------------|
+| |- Use, /bc disband                 -|
+| |----------------------------------------|
+| #EVENT Disband "#1# tells you, 'Incoming group invite...'"
+| #EVENT Disband "<#1#> Disband all"
+| SUB EVENT_Disband(line, ChatSender)
+| /if (${Debug}) /echo |- EVENT_Disband ==>
+| | 
+|    | -Verify the event
+|    /call verifyEvent "${ChatSender}" "${line}"
+|    /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+|    |    |-----------Valid User----------|
+|    /if (${Bool[${Macro.Return.Arg[2,_]}]}) {
+| | 
+|       | -Wait to stop casting.
+|       /if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /delay 300 !${Me.Casting.ID}
+| | 
+|       | -Disband from a raid.
+|       /if (${Raid.Members}) {
+|          /call TrueTarget ${Me.ID}
+|          /raiddisband
+|          /delay 10 !${Raid.Members}
+|       }
+| | 
+|       | -Disband from a group.
+|       /if (${Group}) {
+|          /call TrueTarget ${Me.ID}
+|          /disband
+|          /delay 10 !${Group}
+|       }
+| | 
+|       /squelch /target clear
+|    }
+| | 
+| /if (${Debug}) /echo <== EVENT_Disband -|
+| /RETURN
+
+| Event: Tag
+| Use this event to cause the character running the tanking macro to 
+| (code)/assist the issuer of /bc Tag ${Target.ID}(code)
+|
+#Event Tag "<#1#> Tag #2#"
+Sub Event_Tag(line, ChatSender, MyTarget)
+/echo ${ChatSender} ${MyTarget}
+   | -Verify the event
+   /call verifyEvent "${ChatSender}" "${line}"
+   /varset ChatSender ${Macro.Return.Arg[1,_]}
+   |    |-----------Valid User----------|    |--------Included Bot-----------|
+   /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+
+      /assist ${ChatSender}
+      /target radius 200 id ${MyTarget}
+    /delay .5s
+      /face fast ${Target}
+      /if (${Select[${Me.Casting}, NULL]}) /multiline ; /exchange 30539 ranged ; /ranged ; /exchange 67606 ranged
+    /delay .5s
+      /attack on
+   }
+
+/RETURN
+
+| | Event: RollCall
+| | Use this event to count the number of Bots on your EQBCS Server.
+| |
+| | Usage: /echo RollCall
+| #EVENT CountBots "[#*#] RollCall"
+| SUB EVENT_CountBots
+| /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_CountBots ==>
+|   /if (! ${Defined[MaxResponseDist]} ) {
+|     /declare MaxResponseDist int local 100
+|   }
+|   
+|   /if (!${NetBots.Counts}) {
+|     /echo You must be connected to MQ2EQBC, and, MQ2NetBots, to use this function.
+|   } else {
+|     /declare i int local
+|     
+|     /declare InRangeCount int local
+|     
+|     /declare OutOfRange string local
+|     /declare OutOfRangeCount int local
+|     
+|     /declare OutOfZone string local
+|     /declare OutOfZoneCount int local
+|     
+|     /for i 1 to ${NetBots.Counts}
+|     
+|       /if (!${SpawnCount[pc ${NetBots.Client[${i}]}]}) {
+|         /varset OutOfZone ${OutOfZone}${NetBots.Client[${i}]},
+|         /varcalc OutOfZoneCount ${OutOfZoneCount} + 1
+|       } else /if (${SpawnCount[pc ${NetBots.Client[${i}]}]} && !${SpawnCount[pc ${NetBots.Client[${i}]} radius ${MaxResponseDist}]}) {
+|         /varset OutOfRange ${OutOfRange}${NetBots.Client[${i}]},
+|         /varcalc OutOfRangeCount ${OutOfRangeCount} + 1
+|       } else {
+|         /varcalc InRangeCount ${InRangeCount} + 1
+|       }
+|     /next i
+|   }
+|   
+|   /if (${NetBots.Counts} < 2) {
+|     /echo ------------------------------------------
+|     /echo No other NetBots are connected.
+|     /echo ------------------------------------------
+|   } else {
+|     /echo ------------------------------------------
+|     /echo [${NetBots.Counts}] NetBots connected.
+|     /echo ------------------------------------------
+|   }
+|   
+|   /if (${InRangeCount} > 1) {
+|     /echo [${InRangeCount}] NetBots are present.
+|     /echo ------------------------------------------
+|   }
+|   
+|   /if (${OutOfRange.Length}) {
+|     /varset i 1
+|     /echo [${OutOfRangeCount}] NetBots out of range:
+|     :next_OutOfRange
+|     /echo ----- ${OutOfRange.Arg[${i},,]}, ${Int[${Spawn[pc ${OutOfRange.Arg[${i},,]}].Distance}]} units away.
+|     /varcalc i ${i} + 1
+|     /if (${OutOfRange.Arg[${i},,].Length}) /goto :next_OutOfRange
+|     /echo [${OutOfRangeCount}] NetBots out of range:
+|     /echo ------------------------------------------
+|   }
+|   
+|   /if (${OutOfZone.Length}) {
+|     /varset i 1
+| | 
+|     /echo [${OutOfZoneCount}] NetBots out of zone:
+|     :next_OutOfZone
+|     /echo ----- ${OutOfZone.Arg[${i},,]} is in, ${Zone[${NetBots[${OutOfZone.Arg[${i},,]}].Zone}]}.
+|     /varcalc i ${i} + 1
+|     /if (${OutOfZone.Arg[${i},,].Length}) /goto :next_OutOfZone
+|     /echo ------------------------------------------
+|   }
+| | 
+|     |-- that will return true if the toon is out of zone bugged
+|     | demonstar55's algorythm
+|     /for i 1 to ${Raid.Members}
+| |       /echo ${Raid.Member[${i}]} ${Bool[${Raid.Member[${i}].Name.Equal[${Raid.Member[${Math.Calc[${Raid.Members}/2+1]}]}]}]}
+| |       /if ( !${Bool[${Raid.Member[${i}].Name.Equal[${Raid.Member[${Math.Calc[${Raid.Members}/2+1]}]}]}]} ) }
+| |         |/echo ${Raid.Member[${i}].Name}
+| |       }
+| |     /next i
+|     
+| /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_CountBots -|
+| /RETURN
+
+#EVENT whois "[#1#] Whois #2#"
+Sub Event_whois(line, ChatSender, EventParms)
+
+  /declare GuildNamesAlreadySeen string local NULL
+  /declare PeopleCount int local -1
+  /declare CurrentLine int local 1
+  
+  /if (!${Window[GuildManagementWnd].Open}) {
+    /squelch /windowstate GuildManagementWnd open
+    /delay 1 ${Window[GuildManagementWnd].Open}
+    /if (!${Window[GuildManagementWnd].Child[GT_MemberPage].Open}) {
+      /notify GuildManagementWnd GT_Subwindows tabselect 1
+      /delay 1 ${Window[GuildManagementWnd].Child[GT_MemberPage].Open}
+    }
+  }
+  /if (${Window[GuildManagementWnd].Child[GT_HideAltButton].Checked}) {
+    /notify GuildManagementWnd GT_HideAltButton leftmouseup
+    /delay 1 ${Window[GuildManagementWnd].Child[GT_HideAltButton].Checked}
+  }
+  /if (${Window[GuildManagementWnd].Child[GT_ShowOfflineButton].Checked}) {
+    /notify GuildManagementWnd GT_ShowOfflineButton leftmouseup
+    /delay 1 ${Window[GuildManagementWnd].Child[GT_ShowOfflineButton].Checked}
+  }
+  
+  /delay ${IRCMsgDelay}
+  
+  /varset PeopleCount 0
+  | exclude the spellbots and ircrelay from peoplecount
+  /varset GuildNamesAlreadySeen _Fusion^
+  
+  
+  :GNLoop
+  /if ( ${Window[GuildManagementWnd].Child[GT_MemberList].List[${CurrentLine},1].Equal[${EventParms}]} ) {
+    /echo (${Window[GuildManagementWnd].Child[GT_MemberList].List[${CurrentLine},1]}) ${Window[GuildManagementWnd].Child[GT_MemberList].List[${CurrentLine},9].Arg[1]} 
+    /goto :GNEnd
+  }
+  /varcalc CurrentLine ${CurrentLine}+1
+  |${Window[GuildManagementWnd].Child[GT_MemberList].Items}
+  /if (${CurrentLine}>${Window[GuildManagementWnd].Child[GT_MemberList].Items}) {
+    /echo Not Found
+    /goto :GNEnd
+  }
+  
+  /goto :GNLoop
+
+  :GNEnd
+  /delay ${IRCMsgDelay}
+  /squelch /windowstate GuildManagementWnd close
+  
+/return
+
+Sub Background_Events
+
+/return

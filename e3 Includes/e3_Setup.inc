@@ -24,6 +24,7 @@
 #include e3 Includes\e3_SmoothMoves.inc
 #include e3 Includes\e3_Utilities.inc
 #include e3 Includes\e3_Wait4Rez.inc
+#include e3 Includes\e3_BlockBuffs.inc
 
 #include e3 Includes\e3_Classes_Bard.inc
 #include e3 Includes\e3_Classes_Beastlord.inc
@@ -44,11 +45,12 @@
 
 #include e3 Includes\VetAAs.inc
 
-
+#include vyslib.inc
 
 SUB e3_Setup(modeSelect)
 /if (${Debug}) /echo |- e3_Setup ==>
-
+	/tgb on
+	/call BlockBuffsAtStartup
 	/declare Debug bool outer FALSE
   /declare reloadOnLoot bool outer FALSE
   /declare missingSpellItem string outer
