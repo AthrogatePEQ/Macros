@@ -56,7 +56,7 @@
 | Subroutine: Main
 | This is the entry point of the macro.
 Sub Main
-  /declare MacroData_Ini string outer e3Data.ini
+  /declare MacroData_Ini string outer e3 Macro Inis\\e3 Data.ini
   /declare MaxXTargets int local 5
   /if (${Me.AltAbility[Eyes Wide Open].AARankRequired}) {
     /varcalc MaxXTargets ${MaxXTargets}+${Me.AltAbility[Eyes Wide Open].AARankRequired}
@@ -66,7 +66,7 @@ Sub Main
   /varset IniMode Ini
 
   |/declare Character_Ini string Bot Inis\${MacroQuest.Server}-${Me.CleanName}
-  /declare Character_Ini string e3 Bot Inis\\PEQTGC-${Me.CleanName}
+  /declare Character_Ini string e3 Bot Inis\\${Me.CleanName}_PEQTGC
   /declare genSettings_Ini string outer ${Ini[${MacroData_Ini},File Paths,General Settings]}
   /echo ${Character_Ini}
   |/echo ${genSettings_Ini}
@@ -279,10 +279,10 @@ Sub Event_DoLessons(line)
     }
   /next i
 
-|/for i 1 to 6
-|  /bct ${CurrentExpGroup.Arg[${i}, ]} //casting "Lesson of the Devoted" alt -maxtries|3
-|/next i
-  /bc ForceCast Lesson of the Devoted /only|${CurrentExpGroup}
+/for i 1 to 6
+  /bct ${CurrentExpGroup.Arg[${i}, ]} //casting "Lesson of the Devoted" alt -maxtries|3
+/next i
+  |/bc ForceCast Lesson of the Devoted /only|${CurrentExpGroup}
   /varset LessonTimer 18030
 /return
 

@@ -715,7 +715,7 @@ Sub #IniToVar(Ini_Key, VarToMake, VarType, VarScope)
 Sub #TestNewArray
   /call #RequirePlugin mq2iniext
   /declare macroVersion string outer 5.1.21 (r6)
-  /declare MacroData_Ini string outer e3Data.ini
+  /declare MacroData_Ini string outer e3 Macro Inis\e3 Data.ini
   /declare advSettings_Ini string outer ${IniExt[${MacroData_Ini},File Paths,Advanced Settings]}
   /echo advSettings_Ini = ${advSettings_Ini}
   /declare genSettings_Ini string outer ${IniExt[${MacroData_Ini},File Paths,General Settings]}

@@ -11,7 +11,7 @@
 |--------------------------------------------------------------------------------|
 SUB check_Buffs
 	/if (${Debug} || ${Debug_BuffCheck}) /echo |- buffCheck ==>
-	/if (${BuffCheck} ) {
+	/if (${BuffCheck} && ${UserBuffCheck} ) {
 		/if (!${ActionTaken} && !${activeTimer} && ${BuffCombatCheck} && !${idle} && (!${medBreak} || ${Me.Combat}))	/call buffBots "CombatBuffs2D"
 		/if (!${ActionTaken} && ${InstantBuffs2D.Size[1]})		/call buffBots "InstantBuffs2D"
 		/if (!${ActionTaken} && !${combatTimer} && !${activeTimer} && ${Me.CombatState.NotEqual[COMBAT]} && !${Assisting} && !${Me.Moving} && ${BuffCheck}) {
@@ -53,7 +53,7 @@ SUB buffBots(ArrayName)
 	/varset buffCheckForName	${${ArrayName}[${s},${iCheckFor}]}
 	/varset buffCheckForID		${${ArrayName}[${s},${iCheckForID}]}
 
-
+  /if (!${Bool[${NetBots[${buffTarget}].ID}]}) /return
 	|/echo ${buffSpellName} ${buffSpellID} ${buffCheckForName} ${buffCheckForID} ${Bool[${NetBots[${buffTarget}].Buff.Find[${buffSpellID} ]}]}
   |/echo ${buffSpellName} ${Select["${buffSpellName}","Thief's Eyes", "Fists of Wu", "Commanding Voice","Cry Havoc"]}
   /if (${Select[${buffSpellID},8001,8002,8000,8003]}) {
@@ -205,6 +205,7 @@ SUB EVENT_toggleBuffs(line, ChatSender, buffSetting)
 /if (${Debug} || ${Debug_BuffCheck}) /echo |- EVENT_toggleBuffs ==>
 	/if (${buffSetting.Equal[on]}) {
 		/varset buffSetting TRUE
+		/varset idle FALSE
 	} else /if (${buffSetting.Equal[off]}) {
 		/varset buffSetting FALSE
 	}	
@@ -239,6 +240,7 @@ Sub buffCheck_Setup
 	/declare min_BuffCheckHealth 	int outer 80
 	/declare buffRecastTime			  int outer 60
   /call buff_SpellArrays
+	/call IniToVar "${genSettings_Ini},General,User Buff Check (On/Off)" UserBuffCheck bool outer
 /if (${Debug} || ${Debug_BuffCheck}) /echo <== buffCheck_Setup -|
 /return
 
@@ -249,7 +251,7 @@ SUB buff_SpellArrays
   /if (${Ini[${Character_Ini},Buffs,Bot Buff#1].Length})		/call IniToArray "${Character_Ini},Buffs,Bot Buff#"	BotBuffs
   /if (${Ini[${Character_Ini},Buffs,Combat Buff#1].Length})	/call IniToArray "${Character_Ini},Buffs,Combat Buff#"	CombatBuffs
 
-  /if (${CombatBuffs.Size})	/varset BuffCombatCheck TRUE
+	/if (${CombatBuffs.Size})	/varset BuffCombatCheck TRUE
   /if (${InstantBuffs.Size} || ${SelfBuffs.Size} || ${BotBuffs.Size} || ${CombatBuffs.Size}) /varset BuffCheck TRUE
 
   /if (${InstantBuffs.Size})	/call BuildSpellArray "InstantBuffs"	"InstantBuffs2D"
@@ -279,6 +281,7 @@ SUB buff_SpellArrays
 
 SUB buffCheck_MacroSettings
 	/call WriteToIni "${advSettings_Ini},Debug,Debug BuffCheck (On/Off)" Off
+	/call WriteToIni "${genSettings_Ini},General,User Buff Check (On/Off)" On
 /RETURN
 
 SUB buffCheck_CharacterSettings

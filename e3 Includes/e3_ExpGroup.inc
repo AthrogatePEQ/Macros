@@ -87,6 +87,8 @@ Sub Event_LoadExpGroup(line, input)
   }
   |/mode NoKS off
   |/mode NoKS on /not|${CurrentExpGroup}
+  /expgroup off
+  /expgroup on /only|${CurrentExpGroup}
   /deletevar ExecutingLoadExpGroup
 /return
 
@@ -350,7 +352,7 @@ Sub DisbandExpGroup(oldgroup)
     /bct ${oldgroup.Arg[${i}, ]} //disband
   /next i
 
-  /bct ${groupLeader} //mode reportexp off /only|${groupLeader}
+  |/bct ${groupLeader} //mode reportexp off /only|${groupLeader}
 /return
 
 Sub PrintTerms
