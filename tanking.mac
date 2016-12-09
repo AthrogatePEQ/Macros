@@ -36,6 +36,7 @@
 #include e3 Includes\e3_Utilities.inc
 #include e3 Includes\e3_ExpGroup.inc
 #include ath_lib.inc
+#include vyslib.inc
 |#include e3 Includes\e3_Modes.inc
 #include e3 Includes\e3_Basics.inc
 #include e3 Includes\e3_SmoothMoves.inc
@@ -63,7 +64,13 @@ Sub Main
   }
 
   /declare IniMode string outer
-  /varset IniMode Ini
+  /call #RequirePlugin MQ2IniExt
+  /if (${Macro.Return}) {
+    /varset IniMode IniExt
+    /iniext clear
+  } else {
+    /varset IniMode Ini
+  }
 
   |/declare Character_Ini string Bot Inis\${MacroQuest.Server}-${Me.CleanName}
   /declare Character_Ini string e3 Bot Inis\\${Me.CleanName}_PEQTGC
@@ -71,7 +78,8 @@ Sub Main
   /echo ${Character_Ini}
   |/echo ${genSettings_Ini}
 
-  /if (${Ini[${Character_Ini},Buffs,Self Buff#1].Length}) /call IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
+  |/if (${IniExt[${Character_Ini},Buffs,Self Buff].Length}) /call #IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
+  /call #IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
 
   /declare ChatToggle string outer /bc
 
@@ -279,9 +287,9 @@ Sub Event_DoLessons(line)
     }
   /next i
 
-/for i 1 to 6
-  /bct ${CurrentExpGroup.Arg[${i}, ]} //casting "Lesson of the Devoted" alt -maxtries|3
-/next i
+  /for i 1 to 6
+    /bct ${CurrentExpGroup.Arg[${i}, ]} //casting "Lesson of the Devoted" alt -maxtries|3
+  /next i
   |/bc ForceCast Lesson of the Devoted /only|${CurrentExpGroup}
   /varset LessonTimer 18030
 /return

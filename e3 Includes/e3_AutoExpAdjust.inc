@@ -2,7 +2,7 @@
 #event AutoExpAdjust "You gain#*#experience!#*#"
 
 Sub Event_AutoExpAdjust
-  /if (!${Defined[genSettings_Ini]}) /declare genSettings_Ini string outer ${${IniMode}[${MacroData_Ini},File Paths,General Settings]}
+  /if (!${Defined[genSettings_Ini]}) /declare genSettings_Ini string outer ${${Ini}[${MacroData_Ini},File Paths,General Settings]}
   /if (!${Defined[MaxLevel]}) /call #IniToVar "${genSettings_Ini},General,Max Level" MaxLevel int outer
 
   /if (${Me.Level}<${MaxLevel}) {

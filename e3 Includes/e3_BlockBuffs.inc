@@ -7,7 +7,6 @@
 |------------------------------------------------------------------------|
 
 sub BlockBuffsAtStartup
-|/debug Entering BlockBuffsAtStartup
 
   /declare classesMelee string local BRD,BER,MNK,ROG,WAR,BRD
   /declare classesCaster string local WIZ,MAG,NEC,ENC
@@ -34,33 +33,32 @@ sub BlockBuffsAtStartup
     |/echo ${myBlockedBuffs[${i}]}: ${Spell[${myBlockedBuffs[${i}]}].ID}
     /squelch /blockspell add me ${Spell[${myBlockedBuffs[${i}]}].ID}
   /next i
-|/debug Leaving BlockBuffsAtStartup
 /return
 
 sub BlockBuffSettingReader
 
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Melee,Block#" blockBuffsMelee
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Priest,Block#" blockBuffsPriest
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Caster,Block#" blockBuffsCaster
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Hybrid,Block#" blockBuffsHybrid
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Melee,Block#" blockBuffsMelee
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Priest,Block#" blockBuffsPriest
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Caster,Block#" blockBuffsCaster
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Hybrid,Block#" blockBuffsHybrid
 
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Bard,Block#" blockBuffsBard
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Beserker,Block#" blockBuffsBeserker
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Beastlord,Block#" blockBuffsBeastlord
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Enchanter,Block#" blockBuffsEnchanter
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Cleric,Block#" blockBuffsCleric
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Druid,Block#" blockBuffsDruid
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Magician,Block#" blockBuffsMagician
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Monk,Block#" blockBuffsMonk
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Necromancer,Block#" blockBuffsNecromancer
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Paladin,Block#" blockBuffsPaladin
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Ranger,Block#" blockBuffsRanger
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Rogue,Block#" blockBuffsRogue
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Shadowknight,Block#" blockBuffsShadowknight
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Shaman,Block#" blockBuffsShaman
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Warrior,Block#" blockBuffsWarrior
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,Wizard,Block#" blockBuffsWizard
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Bard,Block#" blockBuffsBard
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Beserker,Block#" blockBuffsBeserker
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Beastlord,Block#" blockBuffsBeastlord
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Enchanter,Block#" blockBuffsEnchanter
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Cleric,Block#" blockBuffsCleric
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Druid,Block#" blockBuffsDruid
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Magician,Block#" blockBuffsMagician
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Monk,Block#" blockBuffsMonk
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Necromancer,Block#" blockBuffsNecromancer
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Paladin,Block#" blockBuffsPaladin
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Ranger,Block#" blockBuffsRanger
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Rogue,Block#" blockBuffsRogue
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Shadowknight,Block#" blockBuffsShadowknight
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Shaman,Block#" blockBuffsShaman
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Warrior,Block#" blockBuffsWarrior
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,Wizard,Block#" blockBuffsWizard
 
-/call #IniToArray "e3 Macro Inis\\BlockBuffs.ini,${Me.Name},Block#" blockBuffsMine
+  /call #IniToArray "e3 Macro Inis\BlockBuffs.ini,${Me.Name},Block#" blockBuffsMine
 
 /return

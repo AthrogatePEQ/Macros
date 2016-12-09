@@ -53,7 +53,8 @@ SUB buffBots(ArrayName)
 	/varset buffCheckForName	${${ArrayName}[${s},${iCheckFor}]}
 	/varset buffCheckForID		${${ArrayName}[${s},${iCheckForID}]}
 
-  /if (!${Bool[${NetBots[${buffTarget}].ID}]}) /return
+  |/if (!${Bool[${NetBots[${buffTarget}].ID}]}) /return
+  /if (!${Bool[${NetBots[${buffTarget}].ID}]}) /goto :skipBuff
 	|/echo ${buffSpellName} ${buffSpellID} ${buffCheckForName} ${buffCheckForID} ${Bool[${NetBots[${buffTarget}].Buff.Find[${buffSpellID} ]}]}
   |/echo ${buffSpellName} ${Select["${buffSpellName}","Thief's Eyes", "Fists of Wu", "Commanding Voice","Cry Havoc"]}
   /if (${Select[${buffSpellID},8001,8002,8000,8003]}) {
@@ -203,14 +204,19 @@ SUB event_BuffAll
 #EVENT toggleBuffs "#1# tells you, 'Toggle Buffs #2#'"
 SUB EVENT_toggleBuffs(line, ChatSender, buffSetting)
 /if (${Debug} || ${Debug_BuffCheck}) /echo |- EVENT_toggleBuffs ==>
-	/if (${buffSetting.Equal[on]}) {
-		/varset buffSetting TRUE
-		/varset idle FALSE
-	} else /if (${buffSetting.Equal[off]}) {
-		/varset buffSetting FALSE
-	}	
-	/varset BuffCheck ${buffSetting}	
-	/docommand ${ChatToggle} BuffCheck [${If[${BuffCheck},ON,OFF]}]
+	/call #verifyEvent "${ChatSender}" "${line}"
+	/if (${Macro.Return}) {
+	/echo ${buffSetting}
+		/if (${buffSetting.Left[2].Equal[on]}) {
+			/varset buffSetting TRUE
+			/varset idle FALSE
+			/varset idleTimer ${idleInterval}m
+		} else /if (${buffSetting.Left[3].Equal[off]}) {
+			/varset buffSetting FALSE
+		}
+		/varset UserBuffCheck ${buffSetting}
+		/docommand ${ChatToggle} BuffCheck [${If[${UserBuffCheck},ON,OFF]}]
+	}
 /if (${Debug} || ${Debug_BuffCheck}) /echo <== EVENT_toggleBuffs -|
 /RETURN
 
@@ -241,24 +247,32 @@ Sub buffCheck_Setup
 	/declare buffRecastTime			  int outer 60
   /call buff_SpellArrays
 	/call IniToVar "${genSettings_Ini},General,User Buff Check (On/Off)" UserBuffCheck bool outer
+	/call IniToVar "${Character_Ini},Buffs,Mass Group Buff" MassGroupBuff string outer
+
 /if (${Debug} || ${Debug_BuffCheck}) /echo <== buffCheck_Setup -|
 /return
 
 SUB buff_SpellArrays
-  /if (${Ini[${Character_Ini},Buffs,Instant Buff#1].Length})	/call IniToArray "${Character_Ini},Buffs,Instant Buff#" InstantBuffs
-  /if (${Ini[${Character_Ini},Buffs,Self Buff#1].Length})		/call IniToArray "${Character_Ini},Buffs,Self Buff#"	SelfBuffs
-  /if (${Ini[${Character_Ini},Buffs,Group Buff#1].Length})	/call IniToArray "${Character_Ini},Buffs,Group Buff#"	GroupBuffs
-  /if (${Ini[${Character_Ini},Buffs,Bot Buff#1].Length})		/call IniToArray "${Character_Ini},Buffs,Bot Buff#"	BotBuffs
-  /if (${Ini[${Character_Ini},Buffs,Combat Buff#1].Length})	/call IniToArray "${Character_Ini},Buffs,Combat Buff#"	CombatBuffs
+  |/if (${Ini[${Character_Ini},Buffs,Instant Buff#1].Length}) /call IniToArray "${Character_Ini},Buffs,Instant Buff#" InstantBuffs
+  |/if (${Ini[${Character_Ini},Buffs,Self Buff#1].Length})		 /call IniToArray "${Character_Ini},Buffs,Self Buff#"	SelfBuffs
+  |/if (${Ini[${Character_Ini},Buffs,Group Buff#1].Length})	 /call IniToArray "${Character_Ini},Buffs,Group Buff#"	GroupBuffs
+  |/if (${Ini[${Character_Ini},Buffs,Bot Buff#1].Length})		 /call IniToArray "${Character_Ini},Buffs,Bot Buff#"	BotBuffs
+  |/if (${Ini[${Character_Ini},Buffs,Combat Buff#1].Length})	 /call IniToArray "${Character_Ini},Buffs,Combat Buff#"	CombatBuffs
+
+	/call #IniToArray "${Character_Ini},Buffs,Instant Buff#" InstantBuffs
+	/call #IniToArray "${Character_Ini},Buffs,Self Buff#"	SelfBuffs
+	/call #IniToArray "${Character_Ini},Buffs,Group Buff#"	GroupBuffs
+	/call #IniToArray "${Character_Ini},Buffs,Bot Buff#"	BotBuffs
+	/call #IniToArray "${Character_Ini},Buffs,Combat Buff#"	CombatBuffs
 
 	/if (${CombatBuffs.Size})	/varset BuffCombatCheck TRUE
   /if (${InstantBuffs.Size} || ${SelfBuffs.Size} || ${BotBuffs.Size} || ${CombatBuffs.Size}) /varset BuffCheck TRUE
 
-  /if (${InstantBuffs.Size})	/call BuildSpellArray "InstantBuffs"	"InstantBuffs2D"
-  /if (${SelfBuffs.Size})		/call BuildSpellArray "SelfBuffs"		"SelfBuffs2D"
-  /if (${BotBuffs.Size})		/call BuildSpellArray "BotBuffs"		"BotBuffs2D"
-  /if (${CombatBuffs.Size})	/call BuildSpellArray "CombatBuffs"		"CombatBuffs2D"
-  /if (${GroupBuffs.Size})	/call BuildSpellArray "GroupBuffs"		"GroupBuffs2D"
+  /if (${InstantBuffs.Size}) /call BuildSpellArray "InstantBuffs"	"InstantBuffs2D"
+  /if (${SelfBuffs.Size})		 /call BuildSpellArray "SelfBuffs"		"SelfBuffs2D"
+  /if (${BotBuffs.Size})		 /call BuildSpellArray "BotBuffs"		"BotBuffs2D"
+  /if (${CombatBuffs.Size})	 /call BuildSpellArray "CombatBuffs"		"CombatBuffs2D"
+  /if (${GroupBuffs.Size})	 /call BuildSpellArray "GroupBuffs"		"GroupBuffs2D"
 
   /declare s int local
   /if (${InstantBuffs2D.Size[1]}) {
@@ -277,6 +291,20 @@ SUB buff_SpellArrays
     /varset GroupBuffs2D[${s},${iMaxTries}] 2
     /next s
   }
+/return
+
+#event raidbuff "<#1#> Raidbuff#2#"
+Sub Event_raidbuff(line, ChatSender, eventParms)
+/if (${Debug}) /echo |- Event_raidbuff ==>
+	/if ( ${Bool[${Me.AltAbility[Mass Group Buff].ID}]} && ${Me.AltAbilityReady[Mass Group Buff]} ) {
+		/if ( ${MassGroupBuff.Length} > 0 ) {
+			/bc Casting "${MassGroupBuff.Arg[1,/]}"
+			/casting "Mass Group Buff|alt" -maxtries|3
+			/delay 5
+			/casting "${MassGroupBuff.Arg[1,/]}" -maxtries|3
+		}
+	}
+/if (${Debug}) /echo <== Event_raidbuff -|
 /return
 
 SUB buffCheck_MacroSettings
@@ -311,4 +339,5 @@ Sub buffCheck_Background_Events
 	/doevents toggleCombatBuffs
 	/doevents BuffAll
 	/doevents castGroupBuffs
+	/doevents raidbuff
 /return

@@ -102,40 +102,6 @@ sub event_manaburn(line, ChatSender, int mobID)
 /if (${Debug} || ${Debug_Count}) /echo <== EVENT_manaburn |
 /return
 
-|###################################################################
-| Raid Buff
-| Subroutine to hopefully speed up buffing for mobilization
-|
-|###################################################################
-#event raidbuff "<#1#> Raidbuff#2#"
-Sub Event_raidbuff(line, ChatSender, eventParms)
-/if (${Debug}) /echo |- Event_raidbuff ==>
-	| -Verify the event
-  /call #verifyEvent "${ChatSender}" "${line}"
-  /if (${Macro.Return}) {
-		/if (${Me.AltAbility[Mass Group Buff].ID} && ${Me.AltAbilityReady[Mass Group Buff]} ) {
-			/if ( ${MassGroupBuff.Length} > 0) {
-				/actionrequest MGB Regen "${MassGroupBuff.Arg[1,/]}"
-				/delay 50 ${ActionLock.Request}
-				/if (${ActionLock.Proceed}) {
-					/call e3_Cast ${Me.ID} "Mass Group Buff"
-					/bc Casting "${MassGroupBuff.Arg[1,/]}"
-					/call e3_Cast ${ChatSender} "${MassGroupBuff}/giveuptimer|45s"
-				}
-			}
-		}
-	}
-
-	| old junk
-	|/echo /bct ${Buffie} //tell ${Buffer} "${BuffName}"
-	|/bct ${Buffie} //tell ${Buffer} "${BuffName}"
-
-/if (${Debug}) /echo <== Event_raidbuff -|
-
-/return
-
-
-
 #EVENT FindItemCount "<#1#> Find Item Count #2#"
 SUB EVENT_FindItemCount(line, ChatSender, args)
 

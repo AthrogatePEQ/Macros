@@ -166,3 +166,8 @@ Sub BRD_Aliases
 	/squelch /alias /SaveMelody /echo Save Melody
 	/squelch /alias /PlayMelody /bc Melody
 /return
+
+Sub check_Bard_Charm
+/return
+Sub check_Bard_Mez
+/return

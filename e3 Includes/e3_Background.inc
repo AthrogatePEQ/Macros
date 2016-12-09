@@ -451,5 +451,5 @@ Sub background_Aliases
 Sub background_Background_Events
   /doevents manualTributeSet
   /doevents Set_zoneType
-
+	/doevents AutoExpAdjust
 /return

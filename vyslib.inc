@@ -661,8 +661,6 @@ Sub #IniToArray_Deprecated(IniKey, ArrayName)
 Sub #IniToArray(IniKey, ArrayName)
   /declare i int local 1
   /declare ArrayScope string local ${If[${Defined[Param2]},${Param2},outer]}
-  /call #IniToArray_Deprecated "${IniKey}" "${ArrayName}" "${ArrayScope}"
-  /return
   /call #RequirePlugin MQ2IniExt
   /if (${Macro.Return}) {
     /if (${IniKey.Right[1].Equal[#]} && ${IniExt[${IniKey}1].Length}) {
@@ -695,8 +693,6 @@ Sub #IniToVar_Deprecated(Ini_Key, VarToMake, VarType, VarScope)
 
 Sub #IniToVar(Ini_Key, VarToMake, VarType, VarScope)
   /if (${Defined[${VarToMake}]}) /deletevar ${VarToMake}
-  /call #IniToVar_Deprecated "${Ini_Key}" "${VarToMake}" "${VarType}" "${VarScope}"
-  /return
   /call #RequirePlugin MQ2IniExt
   /if (${Macro.Return}) {
     /if (${IniExt[${Ini_Key}].Length}) {
