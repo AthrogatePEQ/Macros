@@ -53,7 +53,6 @@ SUB buffBots(ArrayName)
 	/varset buffCheckForName	${${ArrayName}[${s},${iCheckFor}]}
 	/varset buffCheckForID		${${ArrayName}[${s},${iCheckForID}]}
 
-  |/if (!${Bool[${NetBots[${buffTarget}].ID}]}) /return
   /if (!${Bool[${NetBots[${buffTarget}].ID}]}) /goto :skipBuff
 	|/echo ${buffSpellName} ${buffSpellID} ${buffCheckForName} ${buffCheckForID} ${Bool[${NetBots[${buffTarget}].Buff.Find[${buffSpellID} ]}]}
   |/echo ${buffSpellName} ${Select["${buffSpellName}","Thief's Eyes", "Fists of Wu", "Commanding Voice","Cry Havoc"]}
@@ -253,12 +252,6 @@ Sub buffCheck_Setup
 /return
 
 SUB buff_SpellArrays
-  |/if (${Ini[${Character_Ini},Buffs,Instant Buff#1].Length}) /call IniToArray "${Character_Ini},Buffs,Instant Buff#" InstantBuffs
-  |/if (${Ini[${Character_Ini},Buffs,Self Buff#1].Length})		 /call IniToArray "${Character_Ini},Buffs,Self Buff#"	SelfBuffs
-  |/if (${Ini[${Character_Ini},Buffs,Group Buff#1].Length})	 /call IniToArray "${Character_Ini},Buffs,Group Buff#"	GroupBuffs
-  |/if (${Ini[${Character_Ini},Buffs,Bot Buff#1].Length})		 /call IniToArray "${Character_Ini},Buffs,Bot Buff#"	BotBuffs
-  |/if (${Ini[${Character_Ini},Buffs,Combat Buff#1].Length})	 /call IniToArray "${Character_Ini},Buffs,Combat Buff#"	CombatBuffs
-
 	/call #IniToArray "${Character_Ini},Buffs,Instant Buff#" InstantBuffs
 	/call #IniToArray "${Character_Ini},Buffs,Self Buff#"	SelfBuffs
 	/call #IniToArray "${Character_Ini},Buffs,Group Buff#"	GroupBuffs

@@ -26,6 +26,7 @@
 #include e3 Includes\e3_Wait4Rez.inc
 #include e3 Includes\e3_BlockBuffs.inc
 #include e3 Includes\e3_AutoExpAdjust.inc
+#include e3 Includes\e3_Tanking.inc
 
 #include e3 Includes\e3_Classes_Bard.inc
 #include e3 Includes\e3_Classes_Beastlord.inc
@@ -126,7 +127,7 @@ SUB e3_Setup(modeSelect)
 	/if (${Ini[${Macro_Ini},General,Macro Output Channel].Length}) /call IniToVar "${Macro_Ini},General,Macro Output Channel" ChatToggle string outer
 
 	/call IniToArray "${advSettings_Ini},Included Setups,Include#" macroSetups
-	/call IniToArray "${advSettings_Ini},${Me.Class.ShortName} Functions,${Me.Class.ShortName} Function#" mainLoop_Array
+	/call #IniToArray "${advSettings_Ini},${Me.Class.ShortName} Functions,${Me.Class.ShortName} Function#" mainLoop_Array
 	
 | Setup Includes ========================================================================================================== 
 

@@ -161,6 +161,7 @@ Sub Main
           /delay 10 ${Target.ID}==${checkSpawn.ID}
           /attack on
           /stick 10 front
+          /hidec npc
           /varset killTargetID ${checkSpawn.ID}
           /assistme
           /delay 3

@@ -101,16 +101,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
     /varset castReturn CAST_ZONING
     /goto :skipCast
   }
-  |pain in the ass rogue-specific logic
-  /if (${Me.Class.ShortName.Equal[Rog]}) {
-    /if (${Me.Invis}) {
-      |im near other people its ok to break hide
-      /if (${SpawnCount[pc radius 30]} > 1 && ${Me.AbilityReady[Hide]} && !${SpawnCount[npc radius 100]}) {
-        /doability hide
-        |/echo skipping buff, hidden
-      }
-    }
-  }
+
 |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~		
 |  Basic Checks
 :wait_for_misc
