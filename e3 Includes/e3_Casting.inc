@@ -189,8 +189,11 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 		}
     |/echo atcast "${pendingCastID}|${pendingType}" "-targetid|${targetID}"
 		/varset ActionTaken TRUE
+    /if (${${ArrayName}[${ArrayIndex},${iTargetType}].NotEqual[Self]}) {
 		/casting "${pendingCastID}|${pendingType}" "-targetid|${targetID}"
-
+    } else {
+      /casting "${pendingCastID}|${pendingType}"
+    }
 		|- Memorizing spell
 		/if (${Cast.Status.Find[M]}) /delay 4s !${Cast.Status.Find[M]}
 		|- Set expected cast end time in 1/10ths of a second
@@ -234,13 +237,13 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 				}
 				|-Dead target and I'm not using a detrimental AE
 				|/echo ${${ArrayName}[${ArrayIndex},${iCastName}]} ${${ArrayName}[${ArrayIndex},${iTargetType}]}
-				/if (!${Bool[${Target.ID}]} && !${Select[${${ArrayName}[${ArrayIndex},${iTargetType}]},PB AE,Targeted AE,Corpse]}) {
+				/if (${targetID} != ${Me.ID} && !${Bool[${Target.ID}]} && !${Select[${${ArrayName}[${ArrayIndex},${iTargetType}]},PB AE,Targeted AE,Corpse]}) {
           /if (${Debug} || ${Debug_Casting}) /echo target corpse called interrupt
 					/call interrupt
           /goto :interrupted
 				}
 				|-Target is out of range
-				/if (${Target.Distance} > ${${ArrayName}[${ArrayIndex},${iMyRange}]}) {
+				/if (${targetID} != ${Me.ID} && ${Target.Distance} > ${${ArrayName}[${ArrayIndex},${iMyRange}]}) {
           /if (${Debug} || ${Debug_Casting}) /echo target range called interrupt
 					/call interrupt
           /goto :interrupted
