@@ -233,7 +233,7 @@ SUB AggroAbilities
         /delay 4s ${Cast.Ready}
       }
 
-			/if (${Me.ID}==${Me.TargetOfTarget.ID} || ${Target.ID} == 0 || ${Select[${Me.TargetOfTarget.Class.ShortName},WAR,PAL,SHD]} > 0 ) /return
+			/if (${Me.ID}==${Me.TargetOfTarget.ID} || ${Target.ID} == 0 || ${Select[${Me.TargetOfTarget.Class.ShortName},WAR,PAL,SHD]} > 0 || ${Target.Dead} ) /return
 			/delay 5
 		/next j
 		/if ( ${Select[${Me.TargetOfTarget.Class.ShortName},WAR,PAL,SHD]} < 1 ) /goto :DoAggroAbilities

@@ -1375,21 +1375,21 @@ Sub assist_Setup
 |------------------------------------------------------------------------------------------------
 SUB assist_SpellArrays
 | [Nukes].
-  /if (${Ini[${Character_Ini},Nukes,Nuke#1].Length}) /call INItoArray "${Character_Ini},Nukes,${nukesToUse}#" MyNukes
+  /call #INItoArray "${Character_Ini},Nukes,${nukesToUse}#" MyNukes
 
 | [DoTs]
-  /if (${Ini[${Character_Ini},DoTs,DoT on Assist#1].Length})  /call INItoArray "${Character_Ini},DoTs,DoT on Assist#" Assist_DoTs
-  /if (${Ini[${Character_Ini},DoTs,DoT on Command#1].Length}) /call INItoArray "${Character_Ini},DoTs,DoT on Command#" Command_DoTs
+  /call #INItoArray "${Character_Ini},DoTs,DoT on Assist#" Assist_DoTs
+  /call #INItoArray "${Character_Ini},DoTs,DoT on Command#" Command_DoTs
 | [Debuffs]
-  /if (${Ini[${Character_Ini},Debuffs,Debuff on Assist#1].Length})  /call INItoArray "${Character_Ini},Debuffs,Debuff on Assist#" Assist_Debuffs
-  /if (${Ini[${Character_Ini},Debuffs,Debuff on Command#1].Length}) /call INItoArray "${Character_Ini},Debuffs,Debuff on Command#" Command_Debuffs
+  /if (${Ini[${Character_Ini},Debuffs,Debuff on Assist#1].Length})  /call #INItoArray "${Character_Ini},Debuffs,Debuff on Assist#" Assist_Debuffs
+  /if (${Ini[${Character_Ini},Debuffs,Debuff on Command#1].Length}) /call #INItoArray "${Character_Ini},Debuffs,Debuff on Command#" Command_Debuffs
 |- AE Spells
-  /if (${Ini[${Character_Ini},TargetAE,TargetAE#1].Length}) /call INItoArray "${Character_Ini},TargetAE,TargetAE#" TargetAE_Spells
-  /if (${Ini[${Character_Ini},PBAE,PBAE#1].Length})     /call INItoArray "${Character_Ini},PBAE,PBAE#" PBAE_Spells
+  /call #INItoArray "${Character_Ini},TargetAE,TargetAE#" TargetAE_Spells
+  /call #INItoArray "${Character_Ini},PBAE,PBAE#" PBAE_Spells
 | [Burns].
-  /if (${Ini[${Character_Ini},Burn,Quick Burn#1].Length}) /call IniToArray "${Character_Ini},Burn,Quick Burn#" QuickBurns
-  /if (${Ini[${Character_Ini},Burn,Long Burn#1].Length}) /call IniToArray "${Character_Ini},Burn,Long Burn#" LongBurns
-  /if (${Ini[${Character_Ini},Burn,Full Burn#1].Length}) /call IniToArray "${Character_Ini},Burn,Full Burn#" FullBurns
+  /call #IniToArray "${Character_Ini},Burn,Quick Burn#" QuickBurns
+  /call #IniToArray "${Character_Ini},Burn,Long Burn#" LongBurns
+  /call #IniToArray "${Character_Ini},Burn,Full Burn#" FullBurns
 
   /if (${Me.Class.ShortName.Equal[MAG]}) {
     /if (${Bool[${Me.AltAbility[Servant of Ro]}]})        /call BuildArray "swarmPets" "Servant of Ro"
