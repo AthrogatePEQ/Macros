@@ -494,7 +494,7 @@ SUB check_Nukes
       }
     }
     |if the nuke was succesful, see if there is a delay defined and create a timer which locks out all nukes for the duration
-    /if (${Nukes2D[${castIndex},${iDelay}]} && ${Select[${castReturn},CAST_SUCCESS]}) {
+    /if (${Bool[${Nukes2D[${castIndex},${iDelay}]}]} && ${Select[${castReturn},CAST_SUCCESS]}) {
       /if (${Debug} || ${Debug_Assists}) /echo delaying for ${${ArrayName}[${castIndex},${iDelay}]}
       /if (${Defined[castDelay${lastSuccessfulCast}]}) {
         /varset castDelay${lastSuccessfulCast} ${Nukes2D[${castIndex},${iDelay}]}
