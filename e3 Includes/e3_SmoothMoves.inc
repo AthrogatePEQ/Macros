@@ -501,7 +501,10 @@ SUB event_run_Route(line, ChatSender, route_Name)
 								/echo Attempting to click door...
 								/call click_Door ${route_From_Ini.Arg[${i},|].Arg[1,_]} ${route_From_Ini.Arg[${i},|].Arg[3,_]} ${route_From_Ini.Arg[${i},|].Arg[4,_]}
 					
-					
+							} else /if (${route_From_Ini.Arg[${i},|].Find[clickMyDoor]}) {
+								/echo Attempting to click door...
+								/call click_MyDoor ${route_From_Ini.Arg[${i},|].Arg[1,_]} ${route_From_Ini.Arg[${i},|].Arg[3,_]} ${route_From_Ini.Arg[${i},|].Arg[4,_]}
+
 							| Bark at NPC.
 							}
 
@@ -641,7 +644,39 @@ SUB click_Door(locToStart, float snapHeading, float snapLook)
 /if (${Debug} || ${Debug_SmoothMoves}) /echo <== click_Door -|
 /RETURN
 
+|----------------------------------------------------------------------------|
+|- Clicks doors on a recorded route.										-|
+|----------------------------------------------------------------------------|
+|- @param locToStart: Where to stand when trying to click the door.	    -|
+|- @param doorID: The ID of the door to click on.			    -|
+|----------------------------------------------------------------------------|
+SUB click_MyDoor(locToStart, int doorID)
+	/declare retry_Position int local 0
+	:retry_Position
 
+|----------------------------------------------------------------------------------------------Engage MQ2MoveUtils to move to the door's location.
+	/squelch /moveto loc ${locToStart.Arg[1,,]} ${locToStart.Arg[2,,]} dist 1
+	/delay 2s ${Me.Moving}
+
+|----------------------------------------------------------------------------------Wait until I have stopped moving.
+	:wait4Stop
+
+	/call Movement_Events
+	/if (${Me.Moving}) /goto :wait4Stop
+
+|------------------------------------------------------------------Check distance from the door's location, if I'm too far, try to position again.
+	/call Triangulate_Distance ${Me.Loc.Replace[ ,]} ${locToStart}
+	/if (${Macro.Return}>10 && ${retry_Position}<6) {
+		/varcalc retry_Position ${retry_Position} + 1
+		/goto :retry_Position
+	}
+
+|----------------------------------------------------------------------------------------------------------Face the door, and attempt to click it.
+	/doortarget id ${doorID}
+	/delay 1s
+	/click left door
+	/delay 2s
+/RETURN
 
 |--------------------------------------------------------------------|
 |- Clicks zones on a recorded route.								-|

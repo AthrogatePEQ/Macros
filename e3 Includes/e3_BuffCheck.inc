@@ -37,7 +37,7 @@ SUB buffBots(ArrayName)
 	/declare buffCheckForName	string local
 	/declare currentBuffs		string local
 	/declare currentSongs		string local
-
+	/declare MaxBuffs int local
  /for s 1 to ${${ArrayName}.Size[1]}
 	/if (${Debug} || ${Debug_BuffCheck}) /echo buffing ${${ArrayName}[${s},${iCastName}]} on ${${ArrayName}[${s},${iCastTarget}]} checkFor ${${ArrayName}[${s},${iCheckFor}]}
 
@@ -54,7 +54,14 @@ SUB buffBots(ArrayName)
 	/varset buffCheckForID		${${ArrayName}[${s},${iCheckForID}]}
 
   /if (!${Bool[${NetBots[${buffTarget}].ID}]}) /goto :skipBuff
-  /if (${NetBots[${buffTarget}].FreeBuffSlots} > 0) /goto :skipBuff
+  |There's a problem in MQ2NetBots that causes .FreeBuffSlots to not always be right so lets do some guesswork until Demonstar55 gets it fixed
+  |/if (${NetBots[${buffTarget}].FreeBuffSlots} < 1) /goto :skipBuff
+  | All of my toons can support 19 buffs at this time and there's no good way to figure out how many buffs a NetBot can support
+  | so going to do this for now.
+	/varset MaxBuffs 20
+	/varcalc MaxBuffs ${MaxBuffs}-${NetBots[${buffTarget}].Buff.Count[ ]}
+
+  /if (${MaxBuffs} >= 19) /goto :skipBuff
 	|/echo ${buffSpellName} ${buffSpellID} ${buffCheckForName} ${buffCheckForID} ${Bool[${NetBots[${buffTarget}].Buff.Find[${buffSpellID} ]}]}
   |/echo ${buffSpellName} ${Select["${buffSpellName}","Thief's Eyes", "Fists of Wu", "Commanding Voice","Cry Havoc"]}
   /if (${Select[${buffSpellID},8001,8002,8000,8003]}) {
