@@ -1,48 +1,3 @@
-| |--------------------------------------------------------|
-| |- Searches inventory, and banks, for indicated items.	-|
-| |--------------------------------------------------------|
-| |- Use, /bc Find 'Name', or, /echo Find 'Name'.			-|
-| |--------------------------------------------------------|
-| #EVENT FindItemCount "<#1#> Count Item #2#"
-| #EVENT FindItemCount "<#1#> Find Item Count #2#"
-| SUB EVENT_FindItemCount(line, ChatSender, eventParams)
-| |/if (${Debug} || ${Debug_Count}) /echo |- EVENT_FindItemCount ==>
-| |/if (${Debug} || ${Debug_Count}) /echo line: ${line}
-| |/if (${Debug} || ${Debug_Count}) /echo ChatSender: ${ChatSender}
-| |/if (${Debug} || ${Debug_Count}) /echo eventParms: ${eventParams}
-| 
-| 	| -Verify the event
-| 	/call verifyEvent "${ChatSender}" "${line}"
-| 	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-| 	|    |-----------Valid User----------|    |--------Included Bot-----------|
-| 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
-| 	
-| 		| -Declare counting variables.
-| 		/declare i int local
-| 		/declare e int local
-| 		/declare itemName string local
-| 		/declare ItemToFind string local ${eventParams.Arg[1,-]}
-| 		/declare OnlyInventory bool local FALSE
-| 				
-| 		/if (${line.Find[/Inventory]}) /varset OnlyInventory TRUE
-| 		
-| 		| Remove /only /not /otherthings if needed		
-| 		/if (${ItemToFind.Find[ /]}) /varset ItemToFind ${ItemToFind.Left[${Math.Calc[${ItemToFind.Find[ /]} - 1]}]}				
-| 		
-| 		/if (${Debug} || ${Debug_Count}) /echo ItemToFind: [${ItemToFind}] OnlyInventory: ${OnlyInventory}
-| 
-| 		/if (${OnlyInventory} ) {
-| 			/if ( ${FindItemCount[${ItemToFind}]} ) {
-| 				/docommand ${ChatToggle} >>> Found (${Math.Calc[${FindItemCount[${ItemToFind}]}].Int}) examples of [${ItemToFind}] in the following slots ... <<<
-| 			}
-| 		} else /if (${FindItemCount[${ItemToFind}]} || ${FindItemBankCount[${ItemToFind}]} || ${Cursor.Name.Equal[${ItemToFind}]}) {			
-| 			/docommand ${ChatToggle} >>> Found (${Math.Calc[${FindItemCount[${ItemToFind}]} + ${FindItemBankCount[${ItemToFind}]}].Int}) examples of [${ItemToFind}] in the following slots ... <<<		
-| 		}
-| 	}
-| 
-| /if (${Debug} || ${Debug_Count}) /echo <== EVENT_FindItems -|
-| /RETURN
-
 #event mgbregen "<#1#> MGB Regen"
 sub event_mgbregen(line, ChatSender, args)
 /if (${Debug} || ${Debug_Count}) /echo |- EVENT_mgbregen ==>
@@ -106,7 +61,7 @@ sub event_manaburn(line, ChatSender, int mobID)
 SUB EVENT_FindItemCount(line, ChatSender, args)
 
   /if (${Debug} || ${Debug_Count}) /echo |- EVENT_FindItemCount ==>
-  |/if (${Debug} || ${Debug_Count}) /echo line: ${line}
+  /if (${Debug} || ${Debug_Count}) /echo line: ${line}
   /if (${Debug} || ${Debug_Count}) /echo ChatSender: ${ChatSender}
   /if (${Debug} || ${Debug_Count}) /echo eventParms: ${args}
    
@@ -287,8 +242,6 @@ Sub Event_SkillUp(String string1, String SkillName, String SkillNumber)
 	}
 /return
 
-
-#EVENT ReportMana "[#1#] Mana Check#*#"
 #EVENT ReportMana "<#1#> Mana Check#*#"
 Sub Event_ReportMana(line, ChatSender, eventParams)
 |/varset Debug 1
@@ -300,7 +253,7 @@ Sub Event_ReportMana(line, ChatSender, eventParams)
 	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
 	
-		/if (!${Select[${Me.Class.ShortName}, "WAR","MNK","ROG","BER"]}) {
+		/if (!${Select[${Me.Class.ShortName}, "WAR","MNK","ROG","BER"]} && ${Me.PctMana} < 100) {
 			/if ( ${line.Find[raid]} ) {
 				/docommand /timed 1 /rs Current Mana: ${Me.PctMana}%
 			} else /if ( ${line.Find[group]} ) {
@@ -366,3 +319,12 @@ SUB Event_WhoNeedsTwo(line, ChatSender, arg1, arg2)
   |/if ((${Math.Calc[${FindItemCount[=${arg1}]} + ${FindItemBankCount[=${arg1}]}]})==0) /bc 0
 /return
 
+Sub athlib_aliases
+	/alias /fic /bc find item count
+/return
+
+Sub athlib_Background_Events
+	/doevents ReportMana
+	/doevents FindItemCount
+	/doevents SkillUp
+/return

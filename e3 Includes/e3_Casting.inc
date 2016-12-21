@@ -53,7 +53,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
     /echo cast ${pendingCast} ${pendingCastID} ${Spawn[id ${targetID}].Name}  ${targetID}
   }
 	|/call explodeforcallstack
-|  /varset Debug_Casting TRUE
+  |/varset Debug_Casting TRUE
 |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 | Checks to abort casting due to previous failures
 
@@ -189,10 +189,10 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 		}
     |/echo atcast "${pendingCastID}|${pendingType}" "-targetid|${targetID}"
 		/varset ActionTaken TRUE
-    /if (${${ArrayName}[${ArrayIndex},${iTargetType}].NotEqual[Self]}) {
-		/casting "${pendingCastID}|${pendingType}" "-targetid|${targetID}"
+    /if (${${ArrayName}[${ArrayIndex},${iTargetType}].Equal[Self]}) {
+		  /casting "${pendingCastID}|${pendingType}"
     } else {
-      /casting "${pendingCastID}|${pendingType}"
+		/casting "${pendingCastID}|${pendingType}" "-targetid|${targetID}"
     }
 		|- Memorizing spell
 		/if (${Cast.Status.Find[M]}) /delay 4s !${Cast.Status.Find[M]}
@@ -235,9 +235,9 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 					/call interrupt
           /goto :interrupted
 				}
-				|-Dead target and I'm not using a detrimental AE
+				|-Dead target and I'm not using a detrimental AE or self buff
 				|/echo ${${ArrayName}[${ArrayIndex},${iCastName}]} ${${ArrayName}[${ArrayIndex},${iTargetType}]}
-				/if (${targetID} != ${Me.ID} && !${Bool[${Target.ID}]} && !${Select[${${ArrayName}[${ArrayIndex},${iTargetType}]},PB AE,Targeted AE,Corpse]}) {
+				/if (!${Bool[${Target.ID}]} && !${Select[${${ArrayName}[${ArrayIndex},${iTargetType}]},PB AE,Targeted AE,Corpse,Self]}) {
           /if (${Debug} || ${Debug_Casting}) /echo target corpse called interrupt
 					/call interrupt
           /goto :interrupted

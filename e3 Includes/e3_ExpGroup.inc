@@ -1,5 +1,3 @@
-#include vyslib.inc
-
 #Event CheckExpGroup "[MQ2] CheckExpGroup #1#"
 Sub Event_CheckExpGroup(line, input)
   /declare CHECK_ExpGroup int outer 1

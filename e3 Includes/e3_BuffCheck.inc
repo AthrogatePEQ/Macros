@@ -54,14 +54,19 @@ SUB buffBots(ArrayName)
 	/varset buffCheckForID		${${ArrayName}[${s},${iCheckForID}]}
 
   /if (!${Bool[${NetBots[${buffTarget}].ID}]}) /goto :skipBuff
+
   |There's a problem in MQ2NetBots that causes .FreeBuffSlots to not always be right so lets do some guesswork until Demonstar55 gets it fixed
   |/if (${NetBots[${buffTarget}].FreeBuffSlots} < 1) /goto :skipBuff
-  | All of my toons can support 19 buffs at this time and there's no good way to figure out how many buffs a NetBot can support
-  | so going to do this for now.
-	/varset MaxBuffs 20
-	/varcalc MaxBuffs ${MaxBuffs}-${NetBots[${buffTarget}].Buff.Count[ ]}
 
-  /if (${MaxBuffs} >= 19) /goto :skipBuff
+	/if (${Bool[${noslots${Target.ID}-${buffSpellID}}]}) {
+		/goto :skipBuff
+	}
+
+  /if ( ${NetBots[${buffTarget}].Buff.Count[ ]} >= ${MaxBuffCount} ) {
+  	/echo Skipping buff ${buffSpellName} on ${buffTarget} because they have ${NetBots[${buffTarget}].Buff.Count[ ]} already
+  	/call CreateTimer "noslots${Target.ID}-${buffSpellID}" "${noHoldDelay}"
+  	/goto :skipBuff
+  }
 	|/echo ${buffSpellName} ${buffSpellID} ${buffCheckForName} ${buffCheckForID} ${Bool[${NetBots[${buffTarget}].Buff.Find[${buffSpellID} ]}]}
   |/echo ${buffSpellName} ${Select["${buffSpellName}","Thief's Eyes", "Fists of Wu", "Commanding Voice","Cry Havoc"]}
   /if (${Select[${buffSpellID},8001,8002,8000,8003]}) {
@@ -255,7 +260,7 @@ Sub buffCheck_Setup
   /call buff_SpellArrays
 	/call IniToVar "${genSettings_Ini},General,User Buff Check (On/Off)" UserBuffCheck bool outer
 	/call IniToVar "${Character_Ini},Buffs,Mass Group Buff" MassGroupBuff string outer
-
+	/call #IniToVar "${genSettings_Ini},General,Max Buff Count" MaxBuffCount int outer
 /if (${Debug} || ${Debug_BuffCheck}) /echo <== buffCheck_Setup -|
 /return
 

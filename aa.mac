@@ -1,0 +1,17 @@
+sub main
+/declare i int local
+/declare j int local
+/declare name string local
+/declare level string local
+/declare cur int local
+/declare max int local
+/for i 1 to 4
+    /for j 1 to ${Window[AAWindow].Child[List${i}].Items}
+        /varset name ${Window[AAWindow].Child[List${i}].List[${j}, 1]}
+        /varset level ${Window[AAWindow].Child[List${i}].List[${j}, 2]}
+        /varset cur ${level.Arg[1,/]}
+        /varset max ${level.Arg[2,/]}
+        /if (${cur} != ${max}) /ini ../${MacroQuest.Server}_${Me.Name}.ini MQ2AAPurchase_List "${AltAbility[${name}].ID}" "${name}|M"
+    /next j
+/next i
+/return

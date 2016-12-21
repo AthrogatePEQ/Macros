@@ -35,8 +35,9 @@
 
 #include e3 Includes\e3_Utilities.inc
 #include e3 Includes\e3_ExpGroup.inc
-#include ath_lib.inc
-#include vyslib.inc
+#include e3 Includes\ath_lib.inc
+#include e3 Includes\vyslib.inc
+
 |#include e3 Includes\e3_Modes.inc
 #include e3 Includes\e3_Basics.inc
 #include e3 Includes\e3_SmoothMoves.inc
@@ -80,6 +81,7 @@ Sub Main
 
   |/if (${IniExt[${Character_Ini},Buffs,Self Buff].Length}) /call #IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
   /call #IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
+  /call #IniToVar "${genSettings_Ini},General,Max Buff Count" MaxBuffCount int outer
 
   /declare ChatToggle string outer /bc
 
@@ -221,6 +223,7 @@ Sub Event_UpdateTankingAliases
   /alias /stopkilling /echo StopClearXTarget
   /alias /showexpgroup /echo ShowExpGroup
   /alias /lessonready /if (${Me.AltAbilityReady[Lesson of the Devoted]}) /bc Lesson Ready Now
+
 /return
 
 #Event LessonReadyNow "<#1#> Lesson Ready Now"
@@ -280,13 +283,26 @@ Sub Event_ShowExpGroup
 /return
 
 Sub Event_DoLessons(line)
+  |/declare i int local 0
+  |/for i 1 to 6
+  |  /if (!${NetBots[${CurrentExpGroup.Arg[${i}, ]}].FreeBuffSlots}) {
+  |    /echo ${CurrentExpGroup.Arg[${i}, ]} has no free buff slots.
+  |    /if (!${line.Find[-force]}) /return
+  |  }
+  |/next i
+	/varset MaxBuffs 20
+
   /declare i int local 0
+  /declare continue_lesson_cast int local 1
   /for i 1 to 6
-    /if (!${NetBots[${CurrentExpGroup.Arg[${i}, ]}].FreeBuffSlots}) {
+    |/if (!${NetBots[${CurrentExpGroup.Arg[${i}, ]}].FreeBuffSlots} >= ${MaxBuffCount} ) {
+    /if (${NetBots[${CurrentExpGroup.Arg[${i}, ]}].Buff.Count[ ]} >= ${MaxBuffCount}) {
       /echo ${CurrentExpGroup.Arg[${i}, ]} has no free buff slots.
-      /if (!${line.Find[-force]}) /return
+      /varset continue_lesson_cast 0
     }
   /next i
+
+  /if (!${continue_lesson_cast}) /return
 
   /for i 1 to 6
     /bct ${CurrentExpGroup.Arg[${i}, ]} //casting "Lesson of the Devoted" alt -maxtries|3
