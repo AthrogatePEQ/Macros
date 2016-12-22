@@ -3,11 +3,6 @@
 |   Adds an eqbc chat command to show bots current equipment in a given slot.
 |   Responses are item links sent via tell.
 |
-|   Uses MQ2LinkDB
-|   Run these commands before use:
-|     /plugin MQ2LinkDB noauto
-|     /link /scan off
-|
 |   Run this command to create an alias:
 |     /alias /linkyours /bc LinkYours
 |
@@ -40,7 +35,6 @@ Sub LinkYoursCMD_Aliases
 /return
 
 Sub LinkYoursCMD_Setup
-  /link scan off
 /return
 
 Sub Event_LinkYoursCmd(line, chatSender, args)
@@ -79,11 +73,107 @@ Sub Event_LinkYoursCmd(line, chatSender, args)
     /call #SplitTruthArgs "${InclusionPart}" /if TruthArgs "/augs|/show|/filter|/empty"
   }
 
-  /if (!${Plugin[MQ2LinkDB].Name.Length}) /plugin mq2linkdb noauto
-  /if (!${Plugin[MQ2LinkDB].Name.Length}) {
-    /bc I can't load MQ2LinkDB.
-    /return
+  /declare reportedSlots int local 0
+  /declare filteredSlots int local 0
+
+  /declare LY:Response string local
+
+  /call LY:GetSlots "${ArgsPart}" LY:Slots
+  /if (${LY:Slots.Count[|]} > 4) /varset LY:ShowFilter 0
+
+  /if (${LY:Slots.Length}) {
+    /for i 1 to ${LY:Slots.Count[|]}
+      /varset LY:Slot ${LY:Slots.Arg[${i},|]}
+      /if (${InvSlot[${LY:Slot}].Item.ID}) {
+        /if (${LY:OnlyEmpty}) /goto :NextI
+        /if (${TruthArgs.Length}) {
+          /call ProcessItemTruth "${LY:Slot}" "${TruthArgs} "
+          /if (!${Macro.Return}) {
+            /varcalc filteredSlots ${filteredSlots} + 1
+            /if (${LY:ShowFilter}) /varset LY:Response ${LY:Response}Filtered|
+            /goto :NextI
+          }
+        }
+        /varcalc reportedSlots ${reportedSlots} + 1
+
+        /varset LY:Return ${InvSlot[${LY:Slot}].Item.ItemLink}
+
+        /varset LY:Response ${LY:Response}${LY:Return}
+        /if (${InclusionPart.Find[/show|]}) {
+          /call ProcessShowArgs "${InclusionPart}" "${LY:Slot}"
+          /if (${Bool[${Macro.Return}]}) {
+            /varset LY:Response ${LY:Response} (${Macro.Return})|
+          } else {
+            /varset LY:Response ${LY:Response}|
+          }
+        } else {
+          /varset LY:Response ${LY:Response}|
+        }
+      } else {
+        /if (${LY:Slot.Equal[offhand]}) {
+          /if (!${InvSlot[mainhand].Item.Type.Find[2H]}) {
+            /varcalc reportedSlots ${reportedSlots} + 1
+            /varset LY:Response ${LY:Response}Empty${If[${LY:Slots.Count[|]}>=3,[${LY:Slot}],]}|
+          }
+        } else {
+          /varcalc reportedSlots ${reportedSlots} + 1
+          /varset LY:Response ${LY:Response}Empty${If[${LY:Slots.Count[|]}>=3,[${LY:Slot}],]}|
+        }
+      }
+      :NextI
+    /next i
+
+    /if (!${LY:ShowFilter}) /varset filteredSlots 0
+    /if (${filteredSlots} && !${reportedSlots}) /varset LY:Response
+    /if (${LY:Response.Length} && ${Math.Calc[${filteredslots} + ${reportedSlots}].Int} > 0) /varset LY:Response ${LY:Response.Left[-1]}
+    /if (${LY:Response.Length}) {
+      /tell ${chatSender} ${LY:Response}
+    }
   }
+
+/return
+
+Sub Event_LinkYoursCmd_deprecated(line, chatSender, args)
+  /declare LY:TempLink string local
+  /declare displayAugs bool local false
+  /declare i int local
+
+  /call #CreateVars string outer LY:Return LY:Temp LY:Slots LY:Slot AugsList TruthArgs InclusionPart ArgsPart
+
+  /if (${args.Find[||]}) /varset args ${args.Replace[||, or ]}
+
+  /call #SplitInclusionArgs "${args}" ArgsPart InclusionPart "/augs /show /filter /empty"
+
+  /declare LY:ShowFilter int local 1
+  /if (${InclusionPart.Find[/filter]}) /varset LY:ShowFilter 0
+
+  /declare LY:OnlyEmpty int local 0
+  /if (${InclusionPart.Find[/empty]}) /varset LY:OnlyEmpty 1
+
+  /if (${InclusionPart.Length}) {
+    /call #verifyEvent "${chatSender}" "${InclusionPart}"
+    /if (!${Macro.Return}) /return
+  }
+
+  /if (${InclusionPart.Find[/augs]}) {
+    /call #RequirePlugin MQ2Format
+    /if (${Macro.Return}) {
+      /varset displayAugs true
+    } else {
+      /varset displayAugs false
+      /echo Unable to load MQ2Format, will not display augs.
+    }
+  }
+
+  /if (${InclusionPart.Find[/if|]}) {
+    /call #SplitTruthArgs "${InclusionPart}" /if TruthArgs "/augs|/show|/filter|/empty"
+  }
+
+  |/if (!${Plugin[MQ2LinkDB].Name.Length}) /plugin mq2linkdb noauto
+  |/if (!${Plugin[MQ2LinkDB].Name.Length}) {
+  |  /bc I can't load MQ2LinkDB.
+  |  /return
+  |}
 
   /declare reportedSlots int local 0
   /declare filteredSlots int local 0
@@ -113,6 +203,7 @@ Sub Event_LinkYoursCmd(line, chatSender, args)
         } else {
           /call #GetItemLink "${InvSlot[${LY:Slot}].Item.Name}" LY:Return
         }
+
         /varset LY:Response ${LY:Response}${LY:Return}
         /if (${InclusionPart.Find[/show|]}) {
           /call ProcessShowArgs "${InclusionPart}" "${LY:Slot}"
@@ -140,7 +231,7 @@ Sub Event_LinkYoursCmd(line, chatSender, args)
 
     /if (!${LY:ShowFilter}) /varset filteredSlots 0
     /if (${filteredSlots} && !${reportedSlots}) /varset LY:Response
-    /if (${LY:Response.Length} && ${Math.Calc[${filteredslots} + ${reportedSlots}].Int} > 0) /varset LY:Response ${LY:Response.Left[-1]}
+    |/if (${LY:Response.Length} && ${Math.Calc[${filteredslots} + ${reportedSlots}].Int} > 0) /varset LY:Response ${LY:Response.Left[-1]}
     /if (${LY:Response.Length}) {
       /tell ${chatSender} ${LY:Response}
     }

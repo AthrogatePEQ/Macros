@@ -321,6 +321,7 @@ SUB Event_WhoNeedsTwo(line, ChatSender, arg1, arg2)
 
 Sub athlib_aliases
 	/alias /fic /bc find item count
+	/noparse /alias /leader /noparse /bcaa //if (${Select[${Group.Leader},${Me}]})
 /return
 
 Sub athlib_Background_Events

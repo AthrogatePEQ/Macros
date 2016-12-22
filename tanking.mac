@@ -82,7 +82,7 @@ Sub Main
   |/if (${IniExt[${Character_Ini},Buffs,Self Buff].Length}) /call #IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
   /call #IniToArray "${Character_Ini},Buffs,Self Buff#" SelfBuffs
   /call #IniToVar "${genSettings_Ini},General,Max Buff Count" MaxBuffCount int outer
-
+  /call #IniToVar "${genSettings_Ini},General,User Buff Check (On/Off)" UserBuffCheck bool outer
   /declare ChatToggle string outer /bc
 
   /call Basics_Setup
@@ -290,12 +290,9 @@ Sub Event_DoLessons(line)
   |    /if (!${line.Find[-force]}) /return
   |  }
   |/next i
-	/varset MaxBuffs 20
-
   /declare i int local 0
   /declare continue_lesson_cast int local 1
   /for i 1 to 6
-    |/if (!${NetBots[${CurrentExpGroup.Arg[${i}, ]}].FreeBuffSlots} >= ${MaxBuffCount} ) {
     /if (${NetBots[${CurrentExpGroup.Arg[${i}, ]}].Buff.Count[ ]} >= ${MaxBuffCount}) {
       /echo ${CurrentExpGroup.Arg[${i}, ]} has no free buff slots.
       /varset continue_lesson_cast 0
@@ -363,7 +360,7 @@ Sub GetIniArray(File, Section, Key, ArrayName, ArrayScope)
 SUB buffSelf
 /if (${Debug} || ${Debug_BuffCheck}) /echo |- buffSelf ==>
 
-   /if (${Me.Combat} || ${Me.Moving} || ${Me.XTarget} || (${Defined[LessonTimer]} && ${LessonTimer}>0)) /return
+   /if (!${UserBuffCheck} || ${Me.Combat} || ${Me.Moving} || ${Me.XTarget} || (${Defined[LessonTimer]} && ${LessonTimer}>0)) /return
 
    | -Declare local variables.
    /declare castName string local
@@ -412,6 +409,25 @@ SUB buffSelf
 /if (${Debug} || ${Debug_BuffCheck}) /echo <== buffSelf -|
 /RETURN
 
+|----------------------------------------------------|
+|- Tell a character to turn on/off all buffing		-|
+|----------------------------------------------------|
+#EVENT toggleBuffs "<#1#> Toggle Buffs #2#"
+SUB EVENT_toggleBuffs(line, ChatSender, buffSetting)
+/if (${Debug} || ${Debug_BuffCheck}) /echo |- EVENT_toggleBuffs ==>
+	/call #verifyEvent "${ChatSender}" "${line}"
+	/if (${Macro.Return}) {
+	/echo ${buffSetting}
+		/if (${buffSetting.Left[2].Equal[on]}) {
+			/varset buffSetting TRUE
+		} else /if (${buffSetting.Left[3].Equal[off]}) {
+			/varset buffSetting FALSE
+		}
+		/varset UserBuffCheck ${buffSetting}
+		/docommand ${ChatToggle} BuffCheck [${If[${UserBuffCheck},ON,OFF]}]
+	}
+/if (${Debug} || ${Debug_BuffCheck}) /echo <== EVENT_toggleBuffs -|
+/RETURN
 
 |------------------------------------------------------------|
 |- Turns off attack, when a mob you're attacking enrages.   -|
