@@ -378,7 +378,7 @@ Sub #IsItemLink(input, destVar)
 
 Sub #StripItemLink(input, destVar)
   /if (${input.Find[]}) {
-    /varset ${destVar} ${input.Right[-51].Left[-1]}
+    /varset ${destVar} ${input.Right[-57].Left[-1]}
   } else {
     /varset ${destVar} ${input}
   }

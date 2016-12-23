@@ -61,6 +61,7 @@ Sub LootItemCMD_Setup
 /return
 
 Sub Event_LootItemCmd(line, chatSender, targetID, args)
+|/bc looting...
   /if (!(${NetBots[${chatSender}].ID} && ${NetBots[${chatSender}].InZone})) /return
   /if (!${Spawn[id ${targetID}].LineOfSight}) {
     /bc Spawn id ${targetID} is not in line of sight.
@@ -68,12 +69,12 @@ Sub Event_LootItemCmd(line, chatSender, targetID, args)
   }
 
   /declare useItemByID int outer 0
-  /call #RequirePlugin MQ2Fusion
-  /varset useItemByID ${Macro.Return}
-  /if (${useItemByID}) {
-    /call #RequirePlugin MQ2Format
-    /varset useItemByID ${Macro.Return}
-  }
+  |/call #RequirePlugin MQ2Fusion
+  |/varset useItemByID ${Macro.Return}
+  |/if (${useItemByID}) {
+  |  /call #RequirePlugin MQ2Format
+  |  /varset useItemByID ${Macro.Return}
+  |}
 
   /call #CreateVars string outer LICReturn
 
@@ -165,11 +166,12 @@ Sub Event_LootItemCmd(line, chatSender, targetID, args)
 
     /call #StripItemLink "${args}" LICReturn
     /varset args ${LICReturn}
-
+|/bc args: ${args} LICReturn: ${LICReturn} slot: ${Corpse.Item[=${args}].InvSlot.ID}
     /if (${Bool[${Corpse.Item[=${args}].InvSlot.ID}]}) {
       /declare licItemSlot int local ${Corpse.Item[=${args}].InvSlot.ID}
       | Sanity check to make absolutely sure we are looting the right thing.
-      /if (${licItemSlot} && ${InvSlot[${licItemSlot}].Item.Name.Equal[${args}]}) {
+      |/if (${licItemSlot} && ${InvSlot[${licItemSlot}].Item.Name.Equal[${args}]}) {
+      /if (${licItemSlot} ) {
         /itemnotify ${licItemSlot} rightmouseup
       } else {
         /varset licFailMessage Found [${args}] on corpse but something went wrong.
