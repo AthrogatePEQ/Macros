@@ -660,6 +660,8 @@ Sub #IniToArray_Deprecated(IniKey, ArrayName)
 
 Sub #IniToArray(IniKey, ArrayName)
   /declare i int local 1
+  /declare j int local 1
+  /declare array_size int local 0
   /declare ArrayScope string local ${If[${Defined[Param2]},${Param2},outer]}
   /call #RequirePlugin MQ2IniExt
   /if (${Macro.Return}) {
@@ -668,13 +670,25 @@ Sub #IniToArray(IniKey, ArrayName)
       /return
     }
     /if (${IniKey.Right[1].Equal[#]}) /varset IniKey ${IniKey.Left[-1]}
-    |/echo IniKey = ${IniKey} count = ${IniExt[${IniKey}].Count}
+|/echo IniKey = ${IniKey} count = ${IniExt[${IniKey}].Count}
     /if (${Defined[${ArrayName}]}) /deletevar ${ArrayName}
-    /declare ${ArrayName}[${IniExt[${IniKey}].Count}] string ${ArrayScope}
-    /if (${IniExt[${IniKey}].Count}) {
+    /if (${IniExt[${IniKey}].Index[1].Length}) {
       /for i 1 to ${IniExt[${IniKey}].Count}
-        /varset ${ArrayName}[${i}] ${IniExt[${IniKey}].Index[${i}]}
+        /if (${IniExt[${IniKey}].Index[${i}].Length}) {
+          /varcalc array_size ${array_size}+1
+        }
       /next i
+      |/declare ${ArrayName}[${IniExt[${IniKey}].Count}] string ${ArrayScope}
+      /declare ${ArrayName}[${array_size}] string ${ArrayScope}
+      /if (${IniExt[${IniKey}].Count}) {
+        /for i 1 to ${IniExt[${IniKey}].Count}
+|/echo ${ArrayName}[${i}] ${IniExt[${IniKey}].Index[${i}]} Length: ${IniExt[${IniKey}].Index[${i}].Length}
+          /if (${IniExt[${IniKey}].Index[${i}].Length}) {
+            /varset ${ArrayName}[${j}] ${IniExt[${IniKey}].Index[${i}]}
+            /varcalc j ${j}+1
+          }
+        /next i
+      }
     }
   } else {
     /call #IniToArray_Deprecated "${IniKey}" "${ArrayName}" "${ArrayScope}"
@@ -682,11 +696,11 @@ Sub #IniToArray(IniKey, ArrayName)
 /return
 
 Sub #IniToVar_Deprecated(Ini_Key, VarToMake, VarType, VarScope)
-  /if (${IniExt[${Ini_Key}].Length}) {
+  /if (${Ini[${Ini_Key}].Length}) {
     /if (${VarType.Equal[bool]}) {
-      /declare ${VarToMake} bool ${VarScope} ${If[${Select[${IniExt[${Ini_Key}]},TRUE,ON,YES,1]},TRUE,FALSE]}
+      /declare ${VarToMake} bool ${VarScope} ${If[${Select[${Ini[${Ini_Key}]},TRUE,ON,YES,1]},TRUE,FALSE]}
     } else {
-      /declare ${VarToMake} ${VarType} ${VarScope} ${IniExt[${Ini_Key}]}
+      /declare ${VarToMake} ${VarType} ${VarScope} ${Ini[${Ini_Key}]}
     }
   }
 /return ${${VarToMake}}

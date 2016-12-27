@@ -178,17 +178,17 @@ SUB event_returnMinion(line, ChatSender)
 |------------------------------------------------------------------------|
 |- Setup															                                  -|
 Sub pet_Setup
-/call #INItoVar "${advSettings_Ini},Debug,Debug Pets (On/Off)" Debug_Pets bool outer
+/call INItoVar "${advSettings_Ini},Debug,Debug Pets (On/Off)" Debug_Pets bool outer
 /if (${Debug} || ${Debug_Pets}) /echo |- pet_Setup ==>
 	/if (${Ini[${Character_Ini},Pets].Length}) {
     |/declare pet_rebuffTimer timer outer
 		/if (!${Defined[suspend_Pets]})        /declare suspend_Pets bool global FALSE
 		/if (!${Defined[currently_Suspended]}) /declare currently_Suspended bool global FALSE
-    /call #INItoVar "${Character_Ini},Pets,Pet Mend (Pct)" petMendPct int outer
-    /call #INItoVar "${Character_Ini},Pets,Pet Taunt (On/Off)" petTaunt bool outer
-		/call #INItoVar "${Character_Ini},Pets,Pet Auto-Shrink (On/Off)" petAutoShrink bool outer
-    /call #INItoVar "${Character_Ini},Pets,Summon Combat (On/Off)" petSummonCombat bool outer
-    /call #INItoVar "${Character_Ini},Pets,Pet Buff Combat (On/Off)" petBuffCombat bool outer
+    /if (${Ini[${Character_Ini},Pets,Pet Mend (Pct)].Length}) /call INItoVar "${Character_Ini},Pets,Pet Mend (Pct)" petMendPct int outer
+    /if (${Ini[${Character_Ini},Pets,Pet Taunt (On/Off)].Length}) /call INItoVar "${Character_Ini},Pets,Pet Taunt (On/Off)" petTaunt bool outer
+		/if (${Ini[${Character_Ini},Pets,Pet Auto-Shrink (On/Off)].Length}) /call INItoVar "${Character_Ini},Pets,Pet Auto-Shrink (On/Off)" petAutoShrink bool outer
+    /if (${Ini[${Character_Ini},Pets,Pet Summon Combat (On/Off)].Length}) /call INItoVar "${Character_Ini},Pets,Summon Combat (On/Off)" petSummonCombat bool outer
+    /if (${Ini[${Character_Ini},Pets,Pet Buff Combat (On/Off)].Length}) /call INItoVar "${Character_Ini},Pets,Pet Buff Combat (On/Off)" petBuffCombat bool outer
 	}
 	/call pet_spellArrays
 /if (${Debug} || ${Debug_Pets}) /echo <== pet_Setup -|
@@ -198,13 +198,12 @@ Sub pet_Setup
 |- spell setup
 SUB pet_spellArrays
   /call #INItoArray "${Character_Ini},Pets,Pet Spell#" petSpell
-  /if (${Bool[${petSpell.Size}]}) /call BuildSpellArray "petSpell"	"petSpell2D"
-
   /call #INItoArray "${Character_Ini},Pets,Pet Buff#" petBuffs
-  /if (${petBuffs.Size}) /call BuildSpellArray "petBuffs"	"petBuffs2D"
-
   /call #INItoArray "${Character_Ini},Pets,Pet Heal#" petHeal
-  /if (${petHeal.Size}) /call BuildSpellArray "petHeal"	"petHeal2D"
+
+  /if (${petSpell.Size}>0) /call BuildSpellArray "petSpell"	"petSpell2D"
+  /if (${petBuffs.Size}>0) /call BuildSpellArray "petBuffs"	"petBuffs2D"
+  /if (${petHeal.Size}>0) /call BuildSpellArray "petHeal"	"petHeal2D"
 /RETURN
 
 |------------------------------------------------------------------------|

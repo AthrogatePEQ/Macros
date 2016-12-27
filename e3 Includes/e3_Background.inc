@@ -420,7 +420,7 @@ Sub background_Setup
 	| Auto-Tribute
 	/call IniToVar "${genSettings_Ini},Auto-Tribute,Auto-Tribute (On/Off)" autoTribute bool outer
 	| Import NetBots HUD array
-	/call IniToArray "${advSettings_Ini},NetBots HUD,NetBot#" netBotsHUDArray
+	/call #IniToArray "${advSettings_Ini},NetBots HUD,NetBot#" netBotsHUDArray
 /if (${Debug} || ${Debug_Background}) /echo <== background_Setup -|
 /return
 

@@ -74,7 +74,7 @@ SUB event_Assist(line, ChatSender, int MobID)
               | Check MaxRangeTo, make sure it is not out of bounds.
               /if (${AssistStickDistance} > 25) /varset AssistStickDistance 25
               /call StickToAssistTarget
-              /if (${Me.Class.ShortName.Equal[Rog]} && ${Defined[strikeDisc]}) {
+              /if (${Me.Class.ShortName.Equal[Rog]} && ${Defined[strikeDisc]} && ${Bool[${strikeDisc}]}) {
                 /call check_rogStrike
               } else {
                 /attack on
@@ -303,6 +303,7 @@ SUB CombatAbilities
     }
     |- Discipline, no disc with a duration can go here
   } else /if (${Me.CombatAbility[${abilityName}]}) {
+    /echo car ${Me.CombatAbilityReady[${abilityName}]} ${Me.CombatAbility[${abilityName}]} ${abilityName} ${Me.CombatAbilityReady[${abilityName}]} ${Me.CombatAbilityReady[Backstab]}
     /if (${Me.CombatAbilityReady[${abilityName}]}) {
       | Check for MinEnd
       /if (${MyAbilities[${i}].Find[/MinEnd|]}) {
@@ -411,6 +412,7 @@ SUB check_AutoAssist
 /if (${Debug} || ${Debug_Assists}) /echo |- check_AutoAssist ==>
 	/if (!${Assisting}) {
 		| First check if I am attacking something
+		|/echo ${auto_AssistOn} engagepct ${EngagePct}
 		/if (${Target.ID} && ${Me.Combat} || ${Target.ID} && ${Spell[${Me.Casting.ID}].SpellType.Equal[Detrimental]}) {
 			/if (${Target.PctHPs} < ${EngagePct} && ${Select[${Spawn[id ${Target.ID}].Type},${AcceptableTargetTypes}]} && ${Target.ID} != ${PauseTarget}) {
 				/if (${Debug} || ${Debug_Assists}) /echo I am attacking, engaging Assist functions
@@ -426,10 +428,16 @@ SUB check_AutoAssist
 						/if (${Debug} || ${Debug_Assists}) /echo I do not have line of sight on [${Spawn[id ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetID}].CleanName}].  Holding auto assist
 					} else {
 						/if (${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetHP} < ${EngagePct} && ${Select[${Spawn[id ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetID}].Type},${AcceptableTargetTypes}]} && ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetID} != ${PauseTarget} && ${Spawn[id ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetID}].Distance} < ${MaxAssistDistance}) {
+              /call TrueTarget ${msgTarget}
+              |/echo ${NetBots[${NetBots.Client.Arg[${i}, ]}].Name} targ ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetID} thp ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetHP} attack ${NetBots[${NetBots.Client.Arg[${i}, ]}].Attacking} cast ${Spell[${NetBots[${NetBots.Client.Arg[${i}, ]}].Casting}].SpellType.Equal[Detrimental]}
+							/squelch /target id ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetID}
+							/delay 3 ${Target.BuffsPopulated}
+							/if (${Target.PctHPs} < ${EngagePct}) {
 							/if (${Debug} || ${Debug_Assists}) /echo ${NetBots[${NetBots.Client.Arg[${i}, ]}]} is attacking, assisting...
 							/call EVENT_Assist PLACEHOLDER ${NetBots.Client.Arg[${i}, ]} ${NetBots[${NetBots.Client.Arg[${i}, ]}].TargetID}
 						}
 					}
+				}
 				}
 			/if (!${Assisting}) /next i
 		}
@@ -495,7 +503,7 @@ SUB check_Nukes
       }
     }
     |if the nuke was succesful, see if there is a delay defined and create a timer which locks out all nukes for the duration
-    /if (${Bool[${Nukes2D[${castIndex},${iDelay}]}]} && ${Select[${castReturn},CAST_SUCCESS]}) {
+    /if (${Nukes2D[${castIndex},${iDelay}]} && ${Select[${castReturn},CAST_SUCCESS]}) {
       /if (${Debug} || ${Debug_Assists}) /echo delaying for ${${ArrayName}[${castIndex},${iDelay}]}
       /if (${Defined[castDelay${lastSuccessfulCast}]}) {
         /varset castDelay${lastSuccessfulCast} ${Nukes2D[${castIndex},${iDelay}]}
@@ -1271,11 +1279,11 @@ SUB event_NukeSet(line, ChatSender, NukeArray)
         /echo \ag Nuking Disabled
       }
 
-      /if (!${Ini[${Character_Ini},Nukes,${NukeArray}#1].Length}) {
+      /if (!${Ini[${Character_Ini},Nukes,${NukeArray}].Length}) {
         /if (${Debug} || ${Debug_Assists}) /echo \ay [${NukeArray}] is not configured in your bot ini, keeping existing nuke set: [${nukesToUse}]
         /return
       } else {
-        /call INItoArray "${Character_Ini},Nukes,${NukeArray}#" MyNukes
+        /call #INItoArray "${Character_Ini},Nukes,${NukeArray}#" MyNukes
         /if (${MyNukes.Size} > 0) /call BuildSpellArray "MyNukes" "Nukes2D"
         /varset nukesToUse ${NukeArray}
         /varset use_Nukes TRUE
@@ -1332,7 +1340,7 @@ Sub assist_Setup
 		/varset EngagePct 98
 	}
 	| [Melee Abilities].
-	/if (${Ini[${Character_Ini},Melee Abilities,Ability#1].Length}) /call INItoArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
+  /call #INItoArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
 
 | Epic Definitions for EpicBurn - warr, shd, pal,
 /if (${FindItemCount["Prismatic Dragon Blade"]})                /declare EpicName string outer "Prismatic Dragon Blade"
@@ -1378,17 +1386,12 @@ Sub assist_Setup
 SUB assist_SpellArrays
 | [Nukes].
   /call #INItoArray "${Character_Ini},Nukes,${nukesToUse}#" MyNukes
-
-| [DoTs]
   /call #INItoArray "${Character_Ini},DoTs,DoT on Assist#" Assist_DoTs
   /call #INItoArray "${Character_Ini},DoTs,DoT on Command#" Command_DoTs
-| [Debuffs]
-  /if (${Ini[${Character_Ini},Debuffs,Debuff on Assist#1].Length})  /call #INItoArray "${Character_Ini},Debuffs,Debuff on Assist#" Assist_Debuffs
-  /if (${Ini[${Character_Ini},Debuffs,Debuff on Command#1].Length}) /call #INItoArray "${Character_Ini},Debuffs,Debuff on Command#" Command_Debuffs
-|- AE Spells
+  /call #INItoArray "${Character_Ini},Debuffs,Debuff on Assist#"  Assist_Debuffs
+  /call #INItoArray "${Character_Ini},Debuffs,Debuff on Command#" Command_Debuffs
   /call #INItoArray "${Character_Ini},TargetAE,TargetAE#" TargetAE_Spells
   /call #INItoArray "${Character_Ini},PBAE,PBAE#" PBAE_Spells
-| [Burns].
   /call #IniToArray "${Character_Ini},Burn,Quick Burn#" QuickBurns
   /call #IniToArray "${Character_Ini},Burn,Long Burn#" LongBurns
   /call #IniToArray "${Character_Ini},Burn,Full Burn#" FullBurns

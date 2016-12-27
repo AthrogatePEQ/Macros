@@ -46,9 +46,11 @@
 #include e3 Includes\e3_Classes_Wizard.inc
 
 #include e3 Includes\VetAAs.inc
+#include e3 Includes\vyslib.inc
+#include e3 Includes\vyslib_items.inc
+
 
 #include e3 Includes\ath_lib.inc
-#include e3 Includes\vyslib.inc
 #include e3 Includes\LinkYoursCmd.inc
 #include e3 Includes\LootItemCmd.inc
 
