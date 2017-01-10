@@ -39,6 +39,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 /if (${Debug} || ${Debug_Casting}) /echo |- e3_Cast ==>
 	/varset pendingCast		${${ArrayName}[${ArrayIndex},${iCastName}]}
 	/varset pendingCastID	${${ArrayName}[${ArrayIndex},${iCastID}]}
+	/varset noHold				FALSE
 	/declare castTargetName string local ${Spawn[id ${targetID}].CleanName}
 	/varset castEndTime		0
 	/varset interruptFlag FALSE
@@ -267,7 +268,8 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 				/doevents clickit
 				/doevents bark
 				/doevents vetAA_Background_Events
-
+				/call casting_Background_Events
+				/call alerts_Background_Events
         |/varset Debug_Casting FALSE
 			}
 			/goto :cast_still_pending
@@ -276,7 +278,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
     |/echo outcastchecks ${Time}
 		/varset castReturn ${Cast.Result}
 		|- Cast Result Processing
-		/if (${Select[${castReturn},CAST_SUCCESS]}) {
+		/if (${Select[${castReturn},CAST_SUCCESS]} && !${noHold}) {
 			/varset lastSuccessfulCast ${pendingCast}
 		} else /if (${interruptFlag}) {		
 			/varset castReturn CAST_CANCELLED
@@ -286,7 +288,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
       /docommand ${ChatToggle} ${Target.Name} is immune to ${pendingCast} **
 			/varset immuneList ${immuneList}${pendingCastID}_${castTargetName},
     |dont create a nohold timer for detrimental AE spells
-		} else /if (${castReturn.Equal[CAST_TAKEHOLD]} && ${Select[${ArrayName},TargetAE_Spells2D,PBAE_Spells2D]}==0) {
+		} else /if ((${castReturn.Equal[CAST_TAKEHOLD]} || ${noHold}) && ${Select[${ArrayName},TargetAE_Spells2D,PBAE_Spells2D]}==0) {
       /docommand ${ChatToggle} ** ${pendingCast} did not take hold on ${castTargetName} **
 			/if (${Defined[nht${targetID}-${pendingCastID}]}) {
 				/varset nht${targetID}-${pendingCastID} ${noHoldDelay}
@@ -333,10 +335,15 @@ Sub check_Ready(ArrayName, int ArrayIndex)
 /RETURN ${passCheck}
 
 Sub memorize_spell(spellName,gemNum)
+  /declare secWaited int local 0
   /memorize "${spellName}" ${gemNum}
   /delay 5s ${Bool[${Me.Gem[${spellName}]}]}
   /if (${Me.CombatState.NotEqual[COMBAT]}) {
-    /delay 10s ${Me.SpellReady[${spellName}]}
+    :checkMem
+      /delay 2s ${Me.SpellReady[${spellName}]}
+      /varcalc secWaited ${secWaited}+1
+      /call Background_Events
+      /if (${secWaited} < 5) /goto :checkMem
   } else {
     /delay 2s ${Me.SpellReady[${spellName}]}
   }
@@ -431,6 +438,7 @@ Sub casting_Setup
 	/declare noInvis						bool outer TRUE
 	/declare noFeigning					bool outer TRUE
   /declare interruptFlag			bool outer FALSE
+  /declare noHold							bool outer FALSE
 	
 	/declare failureList			string outer
 	/declare immuneList				string outer
@@ -445,10 +453,19 @@ Sub casting_Setup
 /if (${Debug} || ${Debug_Casting}) /echo <== casting_Setup -|
 /return
 
+#event NoHold "You can't levitate in this zone."
+Sub Event_NoHold
+	/echo Event_NoHold
+	/if (${Defined[noHold]}) /varset noHold TRUE
+/return
+
 |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Sub casting_Background_Events
+	/doevents NoHold
 /return
+
 SUB casting_CharacterSettings
 /return
+
 Sub casting_Aliases
 /return
