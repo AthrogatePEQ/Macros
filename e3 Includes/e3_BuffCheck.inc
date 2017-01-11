@@ -80,7 +80,7 @@ SUB buffBots(ArrayName)
 			/if (!${Bool[${Me.Buff[${buffSpellName}]}]} || (${Bool[${Me.Buff[${buffSpellName}]}]} && ${Me.Buff[${buffSpellName}].Duration.TotalSeconds} <= ${buffRecastTime})) {
 			  |/echo ${ArrayName} ${s} b ${buffSpellName} cn ${buffCheckForName}  ${Bool[${Me.Song[${buffSpellName}]}]} ${Bool[${Me.Song[${buffCheckForName}]}]}
 				/if (!${Bool[${Me.Song[${buffSpellName}]}]} && !${Bool[${Me.Song[${buffCheckForName}]}]}) {
-					/if (${Spell[${buffSpellName}].Stacks} && !${Bool[${Me.Buff[${buffCheckForName}]}]}) {
+					/if ((${Spell[${buffSpellName}].Stacks} || ${buffSpellName.Equal[Shield of Dreams]}) && !${Bool[${Me.Buff[${buffCheckForName}]}]}) {
             /call check_Ready "${ArrayName}" ${s}
             /if (${Macro.Return}) {
               /if (${buffSpellName.Equal[Pyromancy]}) {

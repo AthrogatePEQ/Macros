@@ -13,11 +13,6 @@ SUB check_Zone
 /if (${Debug} || ${Debug_Background}) /echo |- check_Zone ==>
 	| Set current zone ID
 	/varset currentZone ${Zone.ID}
-	| If im not wearing chest(dead) and not waiting for rez, wait for rez
-	|	/if (!${Bool[${InvSlot[chest].Item}]} && !${Waiting4Rez} && ${Me.Level}>=50) {
-	|		/if (!${Defined[Waiting4Rez]}) /declare Waiting4Rez bool outer TRUE
-	|		/call Wait4Rez
-	|	}
 	| Update macro timers
 	/varset idleTimer ${idleInterval}m
 	| Turn off assist / attack
@@ -200,6 +195,7 @@ SUB check_Active
 SUB completePendingExchange
 /if (${Debug} || ${Debug_Background}) /echo |- completePendingExchanges ==>
 	| Check for the item needing to be swapped back.
+	/if (${Zone.ID}==306) /return
 	/declare itemToSwapBack string local ${Ini[${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Pending Exchange].Arg[1,/]}
   /declare swapItemSlot ${Ini[${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Pending Exchange].Arg[2,/]}
   |/echo ${itemToSwapBack} ${itemToSwapBack.Length}  ${swapItemSlot} ${swapItemSlot.Length}

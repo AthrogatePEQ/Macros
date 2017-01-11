@@ -289,7 +289,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 			/varset immuneList ${immuneList}${pendingCastID}_${castTargetName},
     |dont create a nohold timer for detrimental AE spells
 		} else /if ((${castReturn.Equal[CAST_TAKEHOLD]} || ${noHold}) && ${Select[${ArrayName},TargetAE_Spells2D,PBAE_Spells2D]}==0) {
-      /docommand ${ChatToggle} ** ${pendingCast} did not take hold on ${castTargetName} **
+      /echo ** ${pendingCast} did not take hold on ${castTargetName} **
 			/if (${Defined[nht${targetID}-${pendingCastID}]}) {
 				/varset nht${targetID}-${pendingCastID} ${noHoldDelay}
 			} else {

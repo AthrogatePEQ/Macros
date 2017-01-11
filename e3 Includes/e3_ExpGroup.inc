@@ -334,11 +334,11 @@ Sub CreateExpGroup(newGroup)
   /for i 2 to ${Math.Calc[${newGroup.Count[ ]}+1]}
     /squelch /bct ${groupLeader} //invite ${newGroup.Arg[${i}, ]}
   /next i
-  /delay 20
-  /for i 2 to ${Math.Calc[${newGroup.Count[ ]}+1]}
-    /squelch /bct ${newGroup.Arg[${i}, ]} //invite
-  /next i
-  |/bct ${groupLeader} //mode reportexp on /only|${groupLeader}
+|  /delay 20
+|  /for i 2 to ${Math.Calc[${newGroup.Count[ ]}+1]}
+|    /squelch /bct ${newGroup.Arg[${i}, ]} //invite
+|  /next i
+|  /bct ${groupLeader} //mode reportexp on /only|${groupLeader}
 /return
 
 Sub DisbandExpGroup(oldgroup)
