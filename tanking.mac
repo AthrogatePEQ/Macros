@@ -92,6 +92,7 @@ Sub Main
   /declare killingStuff int outer 0
   /declare checkSpawn spawn outer
   /declare i int local 0
+  /declare kfl int local 0
   /declare currentExpGroup string outer
   /declare autoKill int outer 0
   /if (!${Defined[LessonTimer]}) /declare LessonTimer timer global 0
@@ -125,9 +126,11 @@ Sub Main
     /if (${Zone.ID} != ${ZoneID}) {
       |Zoned - Reread the configuration File.
       /varset ZoneID ${Zone.ID}
-      /if (${Ini[tanking.ini,${Zone.ShortName},Kill Last#1].Length}) /call IniToArray "tanking.ini,${Zone.ShortName},Kill Last#" KillLastList
-      |/if (${Ini[tanking.ini,potimeb,Kill First#1].Length}) /call IniToArray "tanking.ini,potimeb,Kill First#" KillFirstList
-      
+      |/if (${Ini[tanking.ini,${Zone.ShortName},Kill Last#1].Length}) /call IniToArray "tanking.ini,${Zone.ShortName},Kill Last#" KillLastList
+      |/if (${Ini[tanking.ini,potimeb,Kill First#1].Length}) /call IniToArray "tanking.ini,${Zone.ShortName},Kill First#" KillFirstList
+      /call #IniToArray "tanking.ini,${Zone.ShortName},Kill Last#" KillLastList
+      /call #IniToArray "tanking.ini,${Zone.ShortName},Kill First#" KillFirstList
+
       /if (${Defined[KillLastString]}) /deletevar KillLastString
       /call #ArrayToString KillLastString KillLastList
       /varset KillLastString ${KillLastString.Replace[_, ]}
@@ -146,9 +149,26 @@ Sub Main
     :GetNextNPC
 
     /if (!${Spawn[npc id ${killTargetID}].ID} && ${killingStuff}) {
-      /varcalc i ${i}+1
 
-      /varset npc ${NearestSpawn[${i},npc radius 50 zradius 25 los noalert ${AlertList}].ID}
+      /if ( ${KillFirstList.Size} > 0 ) {
+        /varset npc 0
+
+        /for kfl 1 to ${KillFirstList.Size}
+          /if ( ${Bool[${Spawn[npc radius 50 zradius 25 los ${KillFirstList[${kfl}]}]}]} ) {
+            /echo Found ${Spawn[npc ${KillFirstList[${kfl}]}].CleanName} ${KillFirstList[${kfl}]}
+
+            /varset npc ${Spawn[npc ${KillFirstList[${kfl}]}].ID}
+            /varset kfl ${KillFirstList.Size}
+            /varset i 0
+          }
+        /next kfl
+      }
+
+      /if ( ${npc} == 0 ) {
+        /varcalc i ${i}+1
+        /varset npc ${NearestSpawn[${i},npc radius 50 zradius 25 los noalert ${AlertList}].ID}
+      }
+
       /if ( ${npc} && ${npc} != 0 && ${Select[${Spawn[id ${npc}].Type},${AcceptableTargetTypes}]}) {
         /varset tilde_loc ${Spawn[id ${npc}].CleanName.Find[`s pet]}
         /if (${tilde_loc} > 0) {
