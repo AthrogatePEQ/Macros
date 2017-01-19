@@ -1303,21 +1303,29 @@ SUB event_NukeSet(line, ChatSender, NukeArray)
 
 #event CombatMode "<#1#> CombatMode #2#"
 sub event_CombatMode(line, ChatSender, parms)
-  /echo |-- Entering Combat Mode --|
-  /echo parms: ${parms}
-  /if (${parms.Equal[melee]}) {
+  /if (${Debug} || ${Debug_Assists})  /echo |-- Entering Combat Mode --|
+  
+  |-Verify the event
+  /call #CreateVars string outer argPart InclusionPart
+  /call #SplitInclusionArgs "${parms}" argPart InclusionPart
+  /if (${Debug} || ${Debug_Assists}) /echo argPart: ${argPart} InclusionPart: ${InclusionPart}  
+
+  /call #verifyEvent "${ChatSender}" "${line}"
+  /if (!${Macro.Return}) /return
+  
+  /if (${argPart.Equal[melee]}) {
     /varset AssistType Melee
     /delay 2
     /swap melee
     /delay 2
   }
-  /if ( ${parms.Equal[ranged]}) {
+  /if ( ${argPart.Equal[ranged]}) {
     /varset AssistType Ranged
     /delay 2
     /swap ranged
     /delay 2
   }
-  /echo |-- Leaving Combat Mode ---|
+  /if (${Debug} || ${Debug_Assists})  /echo |-- Leaving Combat Mode ---|
 /return
 
 |--------------------------------------------------------------------------------|
