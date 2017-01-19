@@ -37,6 +37,9 @@ Sub LinkYoursCMD_Aliases
 Sub LinkYoursCMD_Setup
 /return
 
+Sub LinkYoursCMD_CharacterSettings
+/return
+
 Sub Event_LinkYoursCmd(line, chatSender, args)
   /declare LY:TempLink string local
   /declare displayAugs bool local false

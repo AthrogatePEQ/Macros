@@ -60,6 +60,9 @@ Sub LootItemCMD_Aliases
 Sub LootItemCMD_Setup
 /return
 
+Sub LootItemCMD_CharacterSettings
+/return
+
 Sub Event_LootItemCmd(line, chatSender, targetID, args)
 |/bc looting...
   /if (!(${NetBots[${chatSender}].ID} && ${NetBots[${chatSender}].InZone})) /return

@@ -75,7 +75,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 		/goto :skipCast 
 	}
 	|- Check the Immune List
-	/if (${Select[imm${pendingCastID}-${Target.CleanName},${immuneList}]}) {
+	/if (${Select[${pendingCastID}_${castTargetName},${immuneList}]}) {
 		/if (${Debug} || ${Debug_Casting}) /bc ${Target.CleanName} is immune to ${pendingCastID}, skipping cast
 		/varset castReturn CAST_IMMUNE
 		/goto :skipCast 		
@@ -283,7 +283,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 		} else /if (${interruptFlag}) {		
 			/varset castReturn CAST_CANCELLED
 		} else /if (${castReturn.Equal[CAST_RESIST]}) {
-			/if (${Target.ID}) /docommand ${ChatToggle} ** ${Target.Name} resisted ${pendingCast} **
+			/if (${Debug_Casting} && ${Target.ID}) /docommand ${ChatToggle} ** ${Target.Name} resisted ${pendingCast} **
 		} else /if (${castReturn.Equal[CAST_IMMUNE]}) {
       /docommand ${ChatToggle} ${Target.Name} is immune to ${pendingCast} **
 			/varset immuneList ${immuneList}${pendingCastID}_${castTargetName},
@@ -294,6 +294,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
 				/varset nht${targetID}-${pendingCastID} ${noHoldDelay}
 			} else {
 				/call CreateTimer "nht${targetID}-${pendingCastID}" "${noHoldDelay}"
+			}
 			}
 		} else /if (${Select[${castReturn},CAST_OUTDOORS,CAST_COMPONENTS,CAST_UNKNOWN]}) {
 			/docommand ** ${ChatToggle} Adding to failureList due to Return Events CAST_OUTDOORS,CAST_COMPONENT,CAST_UNKNOWN

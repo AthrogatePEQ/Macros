@@ -4,6 +4,9 @@
 |----------------------------------------------------------------|
 |- Contains various alerts.										-|
 |----------------------------------------------------------------|
+Sub alerts_Setup
+
+/RETURN
 
 SUB alerts_Background_Events
   /doevents tactics_stampede

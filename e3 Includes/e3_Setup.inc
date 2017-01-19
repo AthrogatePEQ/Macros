@@ -27,6 +27,8 @@
 #include e3 Includes\e3_BlockBuffs.inc
 #include e3 Includes\e3_AutoExpAdjust.inc
 #include e3 Includes\e3_Tanking.inc
+#include e3 Includes\e3_OffTanking.inc
+#include e3 Includes\e3_Raid_Coth.inc
 
 #include e3 Includes\e3_Classes_Bard.inc
 #include e3 Includes\e3_Classes_Beastlord.inc

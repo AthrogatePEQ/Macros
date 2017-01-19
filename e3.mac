@@ -42,7 +42,6 @@ SUB Main(modeSelect)
     /if (${reloadOnLoot}) /call reloadSpellArrays
 
 		/call Background_Events
-    /if (${OffTank} && ${PauseOfftank}==0 ) /call OfftankAction
 
 		| If I'm not active, call mainFunctions
 		/if (!${activeTimer}) {
