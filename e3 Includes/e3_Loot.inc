@@ -51,11 +51,14 @@ SUB loot_It
     /declare lootTotal int local -1
     /declare lootTotal_Timer timer local
     /declare i int local
+    /declare j int local
     /declare c int local
     /declare looted_Corpses string local
     /declare corpseID int local
     /declare startX int ${Me.X}
     /declare startY int ${Me.Y}
+    /declare itemName string local
+    /declare itemSlot int local
     |NPC corpses have _'s in the name
     |/echo ${Bool[${Select[${NearestSpawn[corpse radius 100].ID},${looted_Corpses}]}]}
   :moreCorpsesToLoot
@@ -91,6 +94,9 @@ SUB loot_It
         /varset looted_Corpses ${looted_Corpses},${corpseID}
         /if (${Bool[${Macro.Return.Equal[SKIP_LOOT]}]}) /goto :SKIP_LOOT
 
+/if (${Debug} || ${Debug_Loot}) /bc Corpse.Items: ${Corpse.Items}
+        /if (!${Corpse.Items}) /goto :SKIP_LOOT
+
         /if (${Debug} || ${Debug_Loot}) /echo yourkill ${Macro.Return} corpse ${corpseID}
         /varset lootTotal_Timer 3s
 
@@ -114,54 +120,92 @@ SUB loot_It
                 /declare fullInventory_Alert bool outer TRUE
                 /docommand ${ChatToggle} My inventory is full!  I will continue to link items on corpses, but cannot loot anything else.
               }
-            } else {
-              | Wait for an item ID in the loot slot, and set iniEntryVariables
-              /delay 1s ${Corpse.Item[${i}].ID}
-              /if (${Debug} || ${Debug_Loot}) /echo itemID ${Corpse.Item[${i}].ID}
-
-              /call get_lootSetting "${i}"
-              |/echo vs5
-              /varset lootSetting ${Macro.Return}
-              | Destroy the item
-              /if (${lootSetting.Find[Destroy]}) {
-                /echo [Auto-Loot]: Destroying [${Corpse.Item[${i}].Name}]
-                /if (${Corpse.Item[i].Lore} && ${FindItemCount[=${Corpse.Item[${i}].Name}]}) /goto :skip_Loot
-                /call loot_Handle ${i} destroy
-              | Keep the item
-              } else /if (${lootSetting.Find[Keep]}) {
-                | Check for a max stock
-                /if (${lootSetting.Find[keep|]}) {
-                  /call argueString keep| "${lootSetting}"
-                  /if (${Bool[${Macro.Return}]} && ${Int[${Macro.Return}]} < ${Math.Calc[${FindItemCount[${Corpse.Item[i].Name}]} + 1].Int}) {
-                    /echo [Auto-Loot]: Fully stocked on [${Corpse.Item[i].Name}].
-                    /goto :skip_Item
-                  }
-                }
-                | If the item is lore, make sure I don't have one.  If I do, skip it.
-                /if (${Corpse.Item[${i}].Lore}) {
-    |								/echo [Auto-Loot]: [${Corpse.Item[i].Name}] is lore check the corpse - broken RoF
-                  /if (${FindItemCount[=${Corpse.Item[${i}].Name}]} || ${FindItemBankCount[=${Corpse.Item[${i}].Name}]}) {
-                    /echo [Auto-Loot]: [${Corpse.Item[${i}].Name}] is lore, and I already have one${If[${FindItemBankCount[=${Corpse.Item[${i}].Name}]}, in the bank,]}.
-                    /goto :skip_Item
-                  }
-                }
-                | Check that I have an inventory space large enough for the item
-                /if (${Me.LargestFreeInventory} < ${Corpse.Item[${i}].Size}) {
-                  /echo [Auto-Loot]: I don't have a free inventory space large enough to hold [${Corpse.Item[${i}].Name}].
-                  /goto :skip_Item
-                }
-                | If the item is a container, skip it.
-                /if (${Corpse.Item[${i}].Container}) {
-                  /echo [Auto-Loot]: Skipping [${Corpse.Item[${i}].Name}], item is a container.
-                  /goto :skip_Item
-                }
-                | loot the item
-                /echo [Auto-Loot]: Looting [${Corpse.Item[${i}].Name}]
-                /call loot_Handle ${i} keep
-              }
-              :skip_Item
-              /next i
             }
+
+            | Wait for an item ID in the loot slot, and set iniEntryVariables
+            /delay 1s ${Corpse.Item[${i}].ID}
+
+            /if (${Debug} || ${Debug_Loot}) /echo itemID ${Corpse.Item[${i}].ID}
+
+            /call get_lootSetting "${i}"
+            |/echo vs5
+            /varset lootSetting ${Macro.Return}
+
+/if (${Debug} || ${Debug_Loot}) /bc Checking: [${Corpse.Item[${i}].Name}] Loot Setting: ${lootSetting}
+
+
+            /if (${lootSetting.Find[Skip]}) /goto :skip_Item
+
+            | Destroy the item
+            /if (${lootSetting.Find[Destroy]}) {
+              /echo [Auto-Loot]: Destroying [${Corpse.Item[${i}].Name}]
+              /if (${Corpse.Item[i].Lore} && ${FindItemCount[=${Corpse.Item[${i}].Name}]}) /goto :skip_Loot
+              /call loot_Handle ${i} destroy
+            | Keep the item
+            } else /if (${lootSetting.Find[Keep]}) {
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: Keeping [${Corpse.Item[${i}].Name}] if I have room
+
+
+              | Check for a max stock
+              /if (${lootSetting.Find[keep|]}) {
+                /call argueString keep| "${lootSetting}"
+                /if (${Bool[${Macro.Return}]} && ${Int[${Macro.Return}]} < ${Math.Calc[${FindItemCount[${Corpse.Item[i].Name}]} + 1].Int}) {
+                  /echo [Auto-Loot]: Fully stocked on [${Corpse.Item[i].Name}].
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: Fully stocked on [${Corpse.Item[i].Name}].
+
+                  /goto :skip_Item
+                }
+              }
+              | If the item is lore, make sure I don't have one.  If I do, skip it.
+              /if (${Corpse.Item[${i}].Lore}) {
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: Lore Check: [${Corpse.Item[${i}].Name}]
+
+  |								/echo [Auto-Loot]: [${Corpse.Item[i].Name}] is lore check the corpse - broken RoF
+                /if (${FindItemCount[=${Corpse.Item[${i}].Name}]} || ${FindItemBankCount[=${Corpse.Item[${i}].Name}]}) {
+                  /echo [Auto-Loot]: [${Corpse.Item[${i}].Name}] is lore, and I already have one${If[${FindItemBankCount[=${Corpse.Item[${i}].Name}]}, in the bank,]}.
+                  /goto :skip_Item
+                }
+              }
+              | Check that I have an inventory space large enough for the item
+              | If 1) No open slots 2) The item on the corpse is stackable 3) I have one of the stackable items in my inventory already
+              | Then check to see if there is room within the stack to loot it.
+              /if (!${Me.LargestFreeInventory} && ${Corpse.Item[${i}].Stackable} && ${Bool[${FindItem[=${Corpse.Item[${i}].Name}]}]}) {
+/bc [Auto-Loot]: Check stackables
+                /varset itemName ${Corpse.Item[${i}].Name}
+                /varset itemSlot ${FindItem[=${itemName}].ItemSlot}
+                /echo itemSlot: ${itemSlot}
+
+                /if (${Bool[${Me.Inventory[${itemSlot}].Items}]}) {
+                  /for j 1 to 10
+                    /if (${Me.Inventory[${itemSlot}].Item[${j}].Name.Equal[${itemName}]}) {
+                      /if (!${Me.Inventory[24].Item[${j}].FreeStack} ) {
+/bc [Auto-Loot]: I've got a stack, but its full, skipping
+                        /goto :skip_Item
+                      } else {
+/bc [Auto-Loot]: I've got a stack, but its NOT full, I should loot this
+                      }
+                    }
+                  /next j
+                }
+              } else /if (${Me.LargestFreeInventory} < ${Corpse.Item[${i}].Size}) {
+                /echo [Auto-Loot]: I don't have a free inventory space large enough to hold [${Corpse.Item[${i}].Name}].
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: I don't have a free inventory space large enough to hold [${Corpse.Item[${i}].Name}].
+
+                /goto :skip_Item
+              } else /if (!${Me.FreeInventory}) /goto :skip_Item
+
+              | If the item is a container, skip it.
+              /if (${Corpse.Item[${i}].Container}) {
+                /echo [Auto-Loot]: Skipping [${Corpse.Item[${i}].Name}], item is a container.
+                /goto :skip_Item
+              }
+              | loot the item
+              /echo [Auto-Loot]: Looting [${Corpse.Item[${i}].Name}]
+              /call loot_Handle ${i} keep
+            }
+            :skip_Item
+            /next i
+
         }
         | If I've finished looting, and there are still items on the corpse, announce in chat.
         /if (${Corpse.Items}) {
