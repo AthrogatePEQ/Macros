@@ -126,12 +126,12 @@ SUB AssistOff
 		/if (${Me.Casting.ID} && !${Spell[${Me.Casting}].SpellType.Find[beneficial]} && ${Me.Class.ShortName.NotEqual[BRD]}) /call interrupt
 		/if (${Me.Combat})    /attack off
 		/if (${Me.AutoFire})  /autofire off
+    /delay 5 !${Me.Combat} && !${Me.AutoFire}
 	|}
   /if (${Me.Pet.ID}) {
     /pet back off
     /pet hold
   }
-  /delay 30 !${Me.Casting.ID} && !${Me.Combat} && !${Me.AutoFire}
 
 	/varset Assisting FALSE
 	/varset AssistTarget 0
@@ -1224,7 +1224,7 @@ SUB event_FullBurn(line, ChatSender)
 |--------------------------------------------------------------------------------|
 SUB useBurns(ArrayName)
 /if (${Debug} || ${Debug_Assists}) /echo |- useBurns Target=${burnTarget}- Array=${ArrayName} ==>
-  /echo useburnstart ${Time}
+  |/echo useburnstart ${Time}
 	/declare i int local
 	/for i 1 to ${${ArrayName}.Size[1]}
     /call check_Ready "${ArrayName}" ${i}
@@ -1235,10 +1235,11 @@ SUB useBurns(ArrayName)
         /g useBurns ${Time} : ${ArrayName}-${${ArrayName}[${i},${iCastName}]}
         /call e3_Cast ${AssistTarget} "${ArrayName}" "${i}"
     } else {
-      /echo NotReady: ${i} ${${ArrayName}[${i},${iCastName}]}
+      /if (${Debug} || ${Debug_Assists}) /echo NotReady: ${i} ${${ArrayName}[${i},${iCastName}]}
     }
-	/if (!${ActionTaken}) /next i
+    /delay 1
   :skipCurrent
+	/if (!${ActionTaken}) /next i
 /if (${Debug} || ${Debug_Assists}) /echo <== useBurns -|
 /RETURN
 
@@ -1324,6 +1325,9 @@ sub event_CombatMode(line, ChatSender, parms)
     /delay 2
     /swap ranged
     /delay 2
+  }
+  /if ( ${argPart.Equal[off]}) {
+    /varset AssistType Off
   }
   /if (${Debug} || ${Debug_Assists})  /echo |-- Leaving Combat Mode ---|
 /return

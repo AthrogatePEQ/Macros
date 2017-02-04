@@ -20,3 +20,19 @@ Sub Event_AutoExpAdjust
     /squelch /alternateadv on 100
   }
 /return
+
+Sub AutoExpAdjust_Setup
+/return
+
+SUB AutoExpAdjust_CharacterSettings
+/RETURN
+
+Sub AutoExpAdjust_Aliases
+/return
+
+Sub AutoExpAdjust_MacroSettings
+/return
+
+Sub AutoExpAdjust_Background_Events
+	/doevents AutoExpAdjust
+/return

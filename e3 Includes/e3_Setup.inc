@@ -22,13 +22,10 @@
 #include e3 Includes\e3_Pets.inc
 #include e3 Includes\e3_Sell.inc
 #include e3 Includes\e3_SmoothMoves.inc
+#include e3 Includes\e3_Tanking.inc
 #include e3 Includes\e3_Utilities.inc
 #include e3 Includes\e3_Wait4Rez.inc
-#include e3 Includes\e3_BlockBuffs.inc
-#include e3 Includes\e3_AutoExpAdjust.inc
-#include e3 Includes\e3_Tanking.inc
-#include e3 Includes\e3_OffTanking.inc
-#include e3 Includes\e3_Raid_Coth.inc
+
 
 #include e3 Includes\e3_Classes_Bard.inc
 #include e3 Includes\e3_Classes_Beastlord.inc
@@ -51,15 +48,18 @@
 #include e3 Includes\vyslib.inc
 #include e3 Includes\vyslib_items.inc
 
-
+#include e3 Includes\e3_BlockBuffs.inc
+#include e3 Includes\e3_AutoExpAdjust.inc
+#include e3 Includes\e3_OffTanking.inc
+#include e3 Includes\e3_Raid_Coth.inc
+|#include e3 Includes\e3_Main_Assist.inc
 #include e3 Includes\ath_lib.inc
 #include e3 Includes\LinkYoursCmd.inc
 #include e3 Includes\LootItemCmd.inc
 
 SUB e3_Setup(modeSelect)
 /if (${Debug}) /echo |- e3_Setup ==>
-	/tgb on
-	/call BlockBuffsAtStartup
+
 	/declare Debug bool outer FALSE
   /declare reloadOnLoot bool outer FALSE
   /declare missingSpellItem string outer
@@ -75,7 +75,7 @@ SUB e3_Setup(modeSelect)
 	/echo Loading e3 v${macroVersion}...
 
 	| create a macro data
-	/if (!${Ini[${MacroData_Ini}].Length}) {
+   /if (!${${IniMode}[${MacroData_Ini}].Length}) {
 		/echo Welcome to e3! preforming first time setup...
 		/call make_macroDataIni
 	}
@@ -83,43 +83,43 @@ SUB e3_Setup(modeSelect)
 | Import file paths ======================================================================================================= 
 
 	| General Settings
-	/if (!${Ini[${MacroData_Ini},File Paths,General Settings].Length}) {
+   /if (!${${IniMode}[${MacroData_Ini},File Paths,General Settings].Length}) {
 		/echo ERROR: Could not find designated file path for [General Settings].  Please review review settings in [${MacroData_Ini} > File Paths].
 		/endmacro
 	} else {
-		/declare genSettings_Ini string outer ${Ini[${MacroData_Ini},File Paths,General Settings]}
+      /declare genSettings_Ini string outer ${${IniMode}[${MacroData_Ini},File Paths,General Settings]}
 	}
 
 	| Advanced Settings
-	/if (!${Ini[${MacroData_Ini},File Paths,Advanced Settings].Length}) {
+   /if (!${${IniMode}[${MacroData_Ini},File Paths,Advanced Settings].Length}) {
 		/echo ERROR: Could not find designated file path for [Advanced Settings].  Please review review settings in [${MacroData_Ini} > File Paths].
 		/endmacro
 	} else {
-		/declare advSettings_Ini string outer ${Ini[${MacroData_Ini},File Paths,Advanced Settings]}
+		/declare advSettings_Ini string outer ${${IniMode}[${MacroData_Ini},File Paths,Advanced Settings]}
 	}
 	
 	| Bot Settings
-	/if (!${Ini[${MacroData_Ini},File Paths,Bot Settings].Length}) {
+	/if (!${${IniMode}[${MacroData_Ini},File Paths,Bot Settings].Length}) {
 		/echo ERROR: Could not find designated file path for [Bot Settings].  Please review review settings in [${MacroData_Ini} > File Paths].
 		/endmacro
 	} else {
-		/declare Character_Ini string outer ${Ini[${MacroData_Ini},File Paths,Bot Settings]}
+		/declare Character_Ini string outer ${${IniMode}[${MacroData_Ini},File Paths,Bot Settings]}
 	}
 	
  |Create Ini files ========================================================================================================
-	/if (${Bool[${Ini[${genSettings_Ini}]}]} && !${Ini[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]}) /echo New version of e3 detected. Hold on to your nuggets!
+	/if (${Bool[${${IniMode}[${genSettings_Ini}]}]} && !${${IniMode}[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]}) /echo New version of e3 detected. Hold on to your nuggets!
 	
 	| Macro Setting Inis
-	/if (!${Ini[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]} || !${Bool[${Ini[${genSettings_Ini}]}]}) /call EVENT_make_MacroSettingsIni
+	/if (!${${IniMode}[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]} || !${Bool[${${IniMode}[${genSettings_Ini}]}]}) /call EVENT_make_MacroSettingsIni
 	
 	| Generate Character_Ini.
-	/if (!${Ini[${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Bot_Ini version].Equal[${macroVersion}]} || !${Bool[${Ini[${Character_Ini}]}]}) /call EVENT_make_CharacterSettingsIni
+	/if (!${${IniMode}[${MacroData_Ini},${Me.CleanName}-${MacroQuest.Server},Bot_Ini version].Equal[${macroVersion}]} || !${Bool[${${IniMode}[${Character_Ini}]}]}) /call EVENT_make_CharacterSettingsIni
 	
 	| Macro Aliases
-	/if (!${Ini[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]}) /call EVENT_updateAliases
+	/if (!${${IniMode}[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]}) /call EVENT_updateAliases
 
 	| Update macro version in e3 Data.ini
-	/if (!${Ini[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]}) /call WriteToIni "${MacroData_Ini},e3 Build,Version" "${macroVersion}" 1
+	/if (!${${IniMode}[${MacroData_Ini},e3 Build,Version].Equal[${macroVersion}]}) /call WriteToIni "${MacroData_Ini},e3 Build,Version" "${macroVersion}" 1
 	
 | Import ini settings ===================================================================================================== 
 	
@@ -130,7 +130,7 @@ SUB e3_Setup(modeSelect)
 	
 	| Chat Channel
 	/declare ChatToggle string outer /bc
-	/if (${Ini[${Macro_Ini},General,Macro Output Channel].Length}) /call IniToVar "${Macro_Ini},General,Macro Output Channel" ChatToggle string outer
+	/if (${${IniMode}[${Macro_Ini},General,Macro Output Channel].Length}) /call IniToVar "${Macro_Ini},General,Macro Output Channel" ChatToggle string outer
 
 	/call #IniToArray "${advSettings_Ini},Included Setups,Include#" macroSetups
 	/call #IniToArray "${advSettings_Ini},${Me.Class.ShortName} Functions,${Me.Class.ShortName} Function#" mainLoop_Array
@@ -143,7 +143,7 @@ SUB e3_Setup(modeSelect)
 	/next i
 
   |Set Turbo per class based on configuration
-  /if (${Ini[${advSettings_Ini},Turbo,${Me.Class.ShortName}].Length}) /declare classTurbo int outer ${Ini[${advSettings_Ini},Turbo,${Me.Class.ShortName}]}
+  /if (${${IniMode}[${advSettings_Ini},Turbo,${Me.Class.ShortName}].Length}) /declare classTurbo int outer ${${IniMode}[${advSettings_Ini},Turbo,${Me.Class.ShortName}]}
   /squelch /turbo ${classTurbo}
 
 	/echo e3 loaded - Turbo ${classTurbo}
@@ -179,23 +179,25 @@ SUB EVENT_make_MacroSettingsIni
 	/echo Creating macro settings files...
 	/call WriteToIni "${genSettings_Ini},General,Macro Output Channel" /bc
 	/call WriteToIni "${advSettings_Ini},Debug,Debug Mode (On/Off)" Off
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#1" background 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#2" basics 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#3" casting 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#4" begForBuffs 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#5" buffCheck 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#6" cures 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#7" pet 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#8" heal 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#9" healChain 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#10" assist 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#11" class 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#12" corpseSummon 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#13" loot 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#14" sell 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#15" smoothMoves 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#16" Wait4Rez 1
-	/call WriteToIni "${advSettings_Ini},Included Setups,Include#17" buy 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" background 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" basics 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" casting 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" begForBuffs 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" buffCheck 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" cures 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" pet 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" heal 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" healChain 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" assist 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" class 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" corpseSummon 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" loot 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" sell 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" smoothMoves 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" Wait4Rez 1
+	/call WriteToIni "${advSettings_Ini},Included Setups,Include" buy 1
+  /call WriteToIni "${advSettings_Ini},Included Setups,Include" alerts 1
+  /call WriteToIni "${advSettings_Ini},Included Setups,Include" tanking 1
 	
 	/delay 15
 

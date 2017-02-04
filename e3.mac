@@ -83,9 +83,6 @@ SUB Background_Events
 		/if (${Bool[${macroSetups[${i}]}]}) /call ${macroSetups[${i}]}_Background_Events
   /next i
 
-  /call athlib_Background_Events
-  /doevents updateAliases
-
   |/echo doevents s ${Time}
   |/doevents
   |/echo doevents e ${Time}

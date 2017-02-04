@@ -327,11 +327,10 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 				/delay 10
 			}
 			
+      /doevents barkReturn
 			| -Check to see if the bark was successful.
 			/call Triangulate_Distance ${Me.Loc.Replace[ ,]} ${startingLoc}
 			
-			/doevents barkReturn
-
 			|/echo dist ${Macro.Return} barkret ${barkReturned} timer ${retryTimer}
 
 			/if (${Zone.ID} == ${currentZone} && ${Macro.Return} < 50 && !${barkReturned}) {
@@ -944,9 +943,21 @@ SUB EVENT_Swap_Items(line, IniEntry)
 			/if (${Ini[${Character_Ini},Swap Items,${IniEntry}].Arg[${i},/].Length}) /goto :SwapLoop
 		} else {
 			| If I'm swapping in a 2 hander, while dual wielding.
-			/if (${slotToSwap.Equal[Mainhand]} && ${FindItem[${itemToSwap}].Type.Left[2].Equal[2H]} && ${Bool[${InvSlot[Offhand].Item}]}) /unequip Offhand
-      /if (${slotToSwap.Equal[Mainhand]} && ${FindItem[${itemToSwap}].ItemSlot}==14) /unequip Offhand
-      /if (${slotToSwap.Equal[Offhand]} && ${FindItem[${itemToSwap}].ItemSlot}==13) /unequip Mainhand
+			/if (${slotToSwap.Equal[Mainhand]} && ${FindItem[${itemToSwap}].Type.Left[2].Equal[2H]} && ${Bool[${InvSlot[Offhand].Item}]}) {
+				/unequip Offhand
+			  /delay 2
+			  /call PlaceInFirstFreeSlot
+			}
+      /if (${slotToSwap.Equal[Mainhand]} && ${FindItem[${itemToSwap}].ItemSlot}==14) {
+				/unequip Offhand
+        /delay 2
+        /call PlaceInFirstFreeSlot
+      }
+      /if (${slotToSwap.Equal[Offhand]} && ${FindItem[${itemToSwap}].ItemSlot}==13) {
+        /unequip Mainhand
+        /delay 2
+        /call PlaceInFirstFreeSlot
+      }
 			| Swap in item.
       /if (${Debug} || ${Debug_Basics}) /echo Equipping [${itemToSwap}] ${slotToSwap}
 			/call SwapItem "${itemToSwap}" ${slotToSwap}
@@ -1585,12 +1596,20 @@ SUB EVENT_listGroups
 SUB EVENT_groupUp(line, ChatSender, eventParams)
 /if (${Debug}) /echo |- EVENT_groupUp ==>
 
-	| -Verify the event
+| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
-	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-	|    |-----------Valid User----------|    |--------Included Bot-----------|
+  /varset ChatSender ${Macro.Return.Arg[1,_]}
+|    |-----------Valid User----------|    |--------Included Bot-----------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
 		
+    /if (${ChatSender.Equal[${Me.Name}]}) {
+      /squelch /bca //raiddisband
+      /squelch /bca //disband
+      /delay 5
+      /if (${Raid.Members}) /raiddisband
+    }
+    /delay 5
+
 		/declare groupName string local ${eventParams.Arg[1,/]}
 		/if (${groupName.Right[1].Equal[ ]}) /varset groupName ${groupName.Left[${Math.Calc[${groupName.Length}-1]}]}
 		/declare groupFound string local
@@ -1602,31 +1621,25 @@ SUB EVENT_groupUp(line, ChatSender, eventParams)
 		
 		| -Check for groupName in Group_Ini.
 		:nextGroupListing
-		/if (${Ini[${Group_Ini}].Arg[${i},|].Arg[2,_].Equal[${groupName}]} && ${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#0].NotEqual[DEPRECATED]}) {
+    /if (${${IniMode}[${Group_Ini}].Arg[${i},|].Arg[2,_].Equal[${groupName}]} && ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#0].NotEqual[DEPRECATED]}) {
 			| Disband from a current group
-			/if (${Group} || ${Raid.Members}) /call EVENT_Disband "PLACEHOLDER" "${Me.CleanName}"
+      /if (${Group}) /call EVENT_Disband "PLACEHOLDER" "${Me.CleanName}"
 				
 			| check to see if I am the group leader(GroupMember#0)
-			/if (${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#0].Equal[${Me.CleanName}]}) {
+      /if (${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#0].Equal[${Me.CleanName}]}) {
 				/echo Recalling [${groupName}]...
-				/delay 2s
+        /delay 15
 				| Invite group members while ignoring placeholders, and set 
 				/for e 1 to 5
-					/varset groupMembers[${e}] ${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
-					/if (${Ini[${Group_Ini},${Ini[${Group_Ini}].Arg[${i},|]},GroupMember#${e}].NotEqual[PLACEHOLDER]}) {
+        /varset groupMembers[${e}] ${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}]}
+        /if (${${IniMode}[${Group_Ini},${${IniMode}[${Group_Ini}].Arg[${i},|]},GroupMember#${e}].NotEqual[PLACEHOLDER]}) {
 						/varcalc groupSize ${groupSize}+1
 						| -Alert PC of incoming group invite.
 						/invite ${groupMembers[${e}]}
 					}
 				/next e
 
-				/delay 3s ${Group} == ${groupSize}
-				/if (${Group} != ${groupSize}) {
-					/for e 1 to 5
-						/if (${groupMembers[${e}].NotEqual[PLACEHOLDER]} && !${Bool[${Group.Member[${groupMembers[${e}]}]}]}) /invite ${groupMembers[${e}]}
-					/next e
-				}
-        /delay 3s ${Group} == ${groupSize}
+        /delay 6s ${Group} == ${groupSize}
         /if (${Group} != ${groupSize}) {
           /for e 1 to 5
           /if (${groupMembers[${e}].NotEqual[PLACEHOLDER]} && !${Bool[${Group.Member[${groupMembers[${e}]}]}]}) /docommand ${ChatToggle} [${groupMembers[${e}]}] Did not join the group...
@@ -1636,8 +1649,9 @@ SUB EVENT_groupUp(line, ChatSender, eventParams)
 			}
 		}
 		/varcalc i ${i}+1
-		/if (${Ini[${Group_Ini}].Arg[${i},|].Length}) /goto :nextGroupListing
+    /if (${${IniMode}[${Group_Ini}].Arg[${i},|].Length}) /goto :nextGroupListing
 	}
+  :skip
 :skip
 /if (${Debug}) /echo <== EVENT_groupUp -|
 /RETURN
@@ -1907,7 +1921,6 @@ SUB basics_CharacterSettings
 
 Sub basics_Aliases
 /if (${Debug} || ${Debug_Basics}) /echo |- basics_Aliases ==>
-	/squelch /alias /expmode /bc ExpGroup
 	/noparse /squelch /alias /followon /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followme /bc Follow ${Me.CleanName}
 	/noparse /squelch /alias /followit /bc Follow ${Target.CleanName}

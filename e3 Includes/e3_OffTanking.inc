@@ -89,6 +89,7 @@ Sub OfftankAction
   /varset npc 0
   /varset i 0
   :GetNextNPC
+  /doevents BackOff
 
   /varcalc i ${i}+1
   /varset npc ${NearestSpawn[${i},npc radius 50 zradius 25 los noalert ${AlertList}].ID}

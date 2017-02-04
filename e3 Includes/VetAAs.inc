@@ -220,7 +220,7 @@ SUB EVENT_MGB(line, ChatSender, eventParams)
 |- Uses 'Throne of Heroes', on all bots who are able.	-|
 |--------------------------------------------------------|
 #EVENT GateToLobby "[#1#] Throne of Heroes"
-#EVENT GateToLobby "<#1#> Throne of Heroes"
+#EVENT GateToLobby "<#1#> Throne of Heroes#2#"
 #EVENT GateToLobby "#1# tells you, 'Throne of Heroes'"
 #EVENT GateToLobby "#1# tells the group, 'Throne of Heroes'"
 #EVENT GateToLobby "#1# tell your party, 'Throne of Heroes'"
