@@ -170,7 +170,7 @@ SUB loot_It
               | If 1) No open slots 2) The item on the corpse is stackable 3) I have one of the stackable items in my inventory already
               | Then check to see if there is room within the stack to loot it.
               /if (!${Me.LargestFreeInventory} && ${Corpse.Item[${i}].Stackable} && ${Bool[${FindItem[=${Corpse.Item[${i}].Name}]}]}) {
-/bc [Auto-Loot]: Check stackables
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: Check stackables
                 /varset itemName ${Corpse.Item[${i}].Name}
                 /varset itemSlot ${FindItem[=${itemName}].ItemSlot}
                 /echo itemSlot: ${itemSlot}
@@ -179,13 +179,16 @@ SUB loot_It
                   /for j 1 to 10
                     /if (${Me.Inventory[${itemSlot}].Item[${j}].Name.Equal[${itemName}]}) {
                       /if (!${Me.Inventory[24].Item[${j}].FreeStack} ) {
-/bc [Auto-Loot]: I've got a stack, but its full, skipping
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: I've got a stack, but its full, skipping
                         /goto :skip_Item
                       } else {
-/bc [Auto-Loot]: I've got a stack, but its NOT full, I should loot this
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: I've got a stack, but its NOT full, I should loot this
                       }
                     }
                   /next j
+                } else /if (${Me.Inventory[${itemSlot}].Name.Equal[${itemName}]} && !${Me.Inventory[24].Item[${j}].FreeStack} ) {
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: I've got a stack, but its full, skipping
+                  /goto :skip_Item
                 }
               } else /if (${Me.LargestFreeInventory} < ${Corpse.Item[${i}].Size}) {
                 /echo [Auto-Loot]: I don't have a free inventory space large enough to hold [${Corpse.Item[${i}].Name}].
