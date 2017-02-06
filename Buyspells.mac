@@ -1,0 +1,158 @@
+
+#event Broke1 "#*#You cannot afford#*#"
+#event Broke2 "#*#You can't afford#*#"
+#event BuyFullInv "#*#Your inventory appears full! How can you buy more?#*#"
+#event Cursor "#*#You may not make a purchase while you have an item on your cursor.#*#"
+
+Sub Main
+	/declare MerchTemp int outer 1
+	/declare PackTotal int outer 7
+	/declare PackSlot int outer 1
+	/declare BagSlot int outer 1
+	/declare j int outer
+	/declare b int outer 0
+	/declare p int outer 1
+	/declare s int outer -1
+	/declare i int outer
+
+	/declare MinLevel int local
+	/declare MaxLevel int local
+
+	/if (${Defined[Param0]}) {
+		/varset MinLevel ${Param0}
+	} else {
+		/varset MinLevel 1
+	}
+	/if (${Defined[Param1]}) {
+		/varset MaxLevel ${Param1}
+	} else {
+		/varset MaxLevel ${Me.Level}
+	}
+
+	/declare startItem int local 1
+	/varset startItem ${Window[MerchantWnd].Child[MW_ItemList].List[Spell,2]}
+	/if (${startItem} == NULL) {
+		/varset startItem ${Window[MerchantWnd].Child[MW_ItemList].List[Skill,2]}
+	}
+	/if (${startItem} == NULL) {
+		/varset startItem ${Window[MerchantWnd].Child[MW_ItemList].List[Tome,2]}
+	}
+	|/for MerchTemp ${Window[MerchantWnd].Child[MW_ItemList].List[Spell,2]} to ${Window[MerchantWnd].Child[MW_ItemList].Items}
+	/for MerchTemp ${startItem} to ${Window[MerchantWnd].Child[MW_ItemList].Items}
+
+		/notify MerchantWnd ItemList listselect ${MerchTemp}
+		/delay 5
+		/notify MerchantWnd Itemlist rightmouse 1
+		/delay 5
+
+		/if (${DisplayItem.Name.Find[Spell]} == 1 || ${DisplayItem.Name.Find[Skill]} == 1 || ${DisplayItem.Name.Find[Tome]} == 1) {
+			/if ( ${MinLevel} <= ${DisplayItem.Spell.Level} && ${DisplayItem.Spell.Level} <= ${MaxLevel} ) {
+				/if ((${Me.Book[${DisplayItem.Spell}]}==NULL) && (${FindItem[${DisplayItem.Name}].ID}==NULL) && (${FindItemBank[${DisplayItem.Name}].ID}==NULL) && (${Me.CombatAbility[${DisplayItem.Spell}]})==NULL) {
+					/echo Buying ${DisplayItem.Spell} for level ${DisplayItem.Spell.Level}
+					/buyitem 1
+					|/doevents
+					/delay 3s
+					/if (${Cursor.ID}) /call Scribe_Spell
+
+				} else /if (!${FindItemBank[${DisplayItem.Name}].ID}==NULL) {
+					/echo ${Me.CleanName} has ${DisplayItem.Name} for level ${DisplayItem.Spell.Level} in the bank.
+				} else /if (!${Me.Book[${DisplayItem.Spell}]}==NULL) {
+					/echo ${Me.CleanName} has ${DisplayItem.Name} for level ${DisplayItem.Spell.Level} scribed.
+				} else /if (!${FindItem[${DisplayItem.Name}].ID}==NULL) {
+					/echo ${Me.CleanName} has ${DisplayItem.Name} for level ${DisplayItem.Spell.Level} in inventory.
+				}
+			}
+		} else /if (!${DisplayItem.Name.Find[Spell]}) {
+			/echo End of spells.
+			/goto :Sbook
+		}
+
+		/if (${Cursor.ID}) /goto :Sbook
+		
+	/next MerchTemp
+
+	:Sbook
+	/notify MerchantWnd MW_Done_Button leftmouseup
+	/delay 1s
+
+	/if (${Cursor.ID}) /inventory
+
+	/if (!${Window[SpellBookWnd].Open}) /squelch /windowstate SpellBookWnd open
+
+
+	/for i 1 to 10
+		/if (${InvSlot[pack${i}].Item.Container}) {
+
+			/if (!${Window[Pack${i}].Open}) /itemnotify pack${i} rightmouseup
+
+			| need a small delay so bag content can load
+			/delay 1
+
+			/for j 1 to ${InvSlot[pack${i}].Item.Container}
+				/if (${InvSlot[pack${i}].Item.Item[${j}].Name.Find["Skill"]} || ${InvSlot[pack${i}].Item.Item[${j}].Name.Find["Tome"]}) {
+					/echo Moving ${InvSlot[pack${i}].Item.Item[${j}].Spell.Name} to 10th inventory slot
+					/itemnotify in pack${i} ${j} leftmouseup
+					/delay 1s
+					/itemnotify pack8 leftmouseup
+					/delay 1s
+					/itemnotify pack8 rightmouseup
+					/delay 1s
+				} else /if (${InvSlot[pack${i}].Item.Item[${j}].Type.Equal["Scroll"]} && ${InvSlot[pack${i}].Item.Item[${j}].Spell.Level} <= ${Me.Level} && !${Me.Book[${InvSlot[pack${i}].Item.Item[${j}].Spell.Name}]}) {
+
+					/echo Please scribe ${InvSlot[pack${i}].Item.Item[${j}].Spell.Name} on cursor
+					/itemnotify in pack${i} ${j} leftmouseup
+
+					| Need a small delay so pickup event can happen
+					/delay 1
+
+					/call Scribe_Spell
+				}
+			/next j
+
+			/if (${Window[Pack${i}].Open}) /itemnotify pack${i} rightmouseup
+		}
+	/next i
+
+	/if (${Window[SpellBookWnd].Open}) /squelch /windowstate SpellBookWnd close
+/return
+
+Sub Scribe_Spell
+	/if (!${Window[SpellBookWnd].Open}) /squelch /windowstate SpellBookWnd open
+
+					| Logic for finding which spell book page and slot next spell should go.
+					:FindNextBlankSpot
+					/varcalc b ${b}+1
+					/varcalc s ${s}+1
+					/if (${s}>15) {
+						/varset s 0
+						/varcalc p ${p}+2
+					}
+
+					/echo Me.Book[${b}] = page ${p} , slot ${s} = ${Me.Book[${b}]}
+					/if (${Me.Book[${b}].Name.NotEqual[NULL]}) /goto :FindNextBlankSpot
+
+					/book ${p}
+					/delay 2
+					/notify SpellBookWnd SBW_Spell${s} leftmouseup
+
+					| Loop while user scribes the spell
+					:WaitForScribe
+					/delay 1s
+					/if (${Cursor.ID}) /goto :WaitForScribe
+/return
+
+Sub Event_Cursor
+	/goto :Sbook
+/return
+
+Sub Event_Broke1
+   /echo You are out of money!
+   /beep
+   /end
+/return
+
+Sub Event_Broke2
+   /echo You are out of money!
+   /beep
+   /end
+/return
