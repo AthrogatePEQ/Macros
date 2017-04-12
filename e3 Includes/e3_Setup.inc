@@ -56,6 +56,11 @@
 #include e3 Includes\ath_lib.inc
 #include e3 Includes\LinkYoursCmd.inc
 #include e3 Includes\LootItemCmd.inc
+#include e3 Includes\e3_Reagents.inc
+#include e3 Includes\HandItemCmd.inc
+#include e3 Includes\e3_Cures2.inc
+#include e3 Includes\FindAugsCmd.inc
+|#include e3 Includes\e3_FocusFinder.inc
 
 SUB e3_Setup(modeSelect)
 /if (${Debug}) /echo |- e3_Setup ==>

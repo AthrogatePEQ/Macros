@@ -319,13 +319,162 @@ SUB Event_WhoNeedsTwo(line, ChatSender, arg1, arg2)
   |/if ((${Math.Calc[${FindItemCount[=${arg1}]} + ${FindItemBankCount[=${arg1}]}]})==0) /bc 0
 /return
 
+#event MyCure "<#1#> MyCure#2#"
+sub event_MyCure(line, ChatSender, args)
+/echo [[ ENTERING MY CURE ]]
+/echo autoRCure: ${autoRCure}
+/echo doMyCures: ${doMyCures}
+
+	/call #verifyEvent "${ChatSender}" "${line}"
+	/if (!${Macro.Return}) /return
+
+| 1- checks Radiant Curing: AutoRadiant + RadiantCure#
+  /if (${autoRCure}) /call do_RadiantCure
+
+| 2- checks specified Target curing: Cure#
+  /if (!${ActionTaken} && ${doMyCures}) {
+		/call do_MyCures
+	}
+
+/echo [[ LEAVING MY CURE ]]
+/return
+
+sub do_MyCures
+	/call do_MyCuresGroup
+	/call do_MyCureNetbots
+	/echo actionTaken: ${ActionTaken}
+/return
+
+sub do_MyCuresGroup
+/echo do_MyCuresGroup
+	/declare i int local 0
+	/declare n int local 0
+
+|1 check group
+	/for n 0 to ${Group}
+		/if (${Bool[${Spawn[pc =${Group.Member[${n}]}]}]}) {
+		/call athlib_process_detramentals ${Group.Member[${n}]}
+|			/for i 0 to 20
+|:CureBot
+|				/if ( ${Bool[${NetBots[${Group.Member[${n}]}].Buff[${i}]}]} ) {
+|
+|					/if ( ${NetBots[${Group.Member[${n}]}].Buff[${i}].SpellType.Equal[Detrimental]} && ${Bool[${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType}]} ) {
+|/echo "${n} ${Group.Member[${n}]} ${NetBots[${Group.Member[${n}]}].Buff[${i}]}" "${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType}"
+|
+|						/if (${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType.Equal[Poison]} && ${Bool[${Me.Book[${CurePoisonSpell}]}]}) {
+|							/call athlib_cure_spell "${Group.Member[${n}]}" "${CurePoisonSpell}"
+|							/if (${Bool[${NetBots[${Group.Member[${n}]}].Buff[${i}]}]} && ${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType.Equal[Poison]}) /goto :CureBot
+|						} else /if (${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType.Equal[Disease]} && ${Bool[${Me.Book[${CureDiseaseSpell}]}]}) {
+|							/call athlib_cure_spell "${Group.Member[${n}]}" "${CureDiseaseSpell}"
+|							/if (${Bool[${NetBots[${Group.Member[${n}]}].Buff[${i}]}]} && ${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType.Equal[Disease]}) /goto :CureBot
+|						} else /if (${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType.Equal[Curse]} && ${Bool[${Me.Book[${CureCurseSpell}]}]}) {
+|							/call athlib_cure_spell "${Group.Member[${n}]}" "${CureCurseSpell}"
+|							/if (${Bool[${NetBots[${Group.Member[${n}]}].Buff[${i}]}]} && ${NetBots[${Group.Member[${n}]}].Buff[${i}].CounterType.Equal[Curse]}) /goto :CureBot
+|						}
+|					}
+|				}
+|			/next i
+		}
+	/next n
+/return
+
+sub do_MyCureNetbots
+/echo do_MyCuresNetbots
+
+	/declare n int local 0
+	/declare myCheckMember string local
+	/declare myCheckID     int    local
+	/for n 0 to ${NetBots.Counts}
+		/if (${SpawnCount[pc =${NetBots.Client[${n}]}]} ) {
+			/varset myCheckMember ${NetBots.Client[${n}]}
+			/varset myCheckID     ${Spawn[${NetBots.Client[${n}]}].ID}
+			/call athlib_process_detramentals ${myCheckMember}
+		}
+	/next n
+/return
+
+sub athlib_process_detramentals(targetName)
+	/declare i int local 0
+	/declare continue bool local false
+
+	/varset continue FALSE
+	/for i 0 to 20
+:AthLibCureBot
+|/echo ${i} ${targetName}
+		/if (${Bool[${NetBots[${targetName}].Buff[${i}]}]}) {
+			/if (${NetBots[${targetName}].Buff[${i}].CounterType.Equal[Poison]} && ${Bool[${Me.Book[${CurePoisonSpell}]}]}) {
+				/call athlib_cure_spell "${targetName}" "${CurePoisonSpell}"
+				|/if (${Bool[${NetBots[${targetName}].Buff[${i}]}]} && ${NetBots[${targetName}].Buff[${i}].CounterType.Equal[Poison]}) /goto :AthLibCureBot
+				/if (${Bool[${Macro.Return}]}) /varset continue TRUE
+				/if (${Bool[${Macro.Return}]}) /goto :AthLibCureBot
+			} else /if (${NetBots[${targetName}].Buff[${i}].CounterType.Equal[Disease]} && ${Bool[${Me.Book[${CureDiseaseSpell}]}]}) {
+				/call athlib_cure_spell "${targetName}" "${CureDiseaseSpell}"
+				|/if (${Bool[${NetBots[${targetName}].Buff[${i}]}]} && ${NetBots[${targetName}].Buff[${i}].CounterType.Equal[Disease]}) /goto :AthLibCureBot
+				/if (${Bool[${Macro.Return}]}) /varset continue TRUE
+				/if (${Bool[${Macro.Return}]}) /goto :AthLibCureBot
+			} else /if (${NetBots[${targetName}].Buff[${i}].CounterType.Equal[Curse]} && ${Bool[${Me.Book[${CureCurseSpell}]}]}) {
+				/call athlib_cure_spell "${targetName}" "${CureCurseSpell}"
+				|/if (${Bool[${NetBots[${targetName}].Buff[${i}]}]} && ${NetBots[${targetName}].Buff[${i}].CounterType.Equal[Curse]}) /goto :AthLibCureBot
+				/if (${Bool[${Macro.Return}]}) /varset continue TRUE
+				/if (${Bool[${Macro.Return}]}) /goto :AthLibCureBot
+			}
+		}
+	/next i
+
+/return ${continue}
+
+sub athlib_cure_spell(cureTarget, cureSpell)
+	/declare targetID int local ${Spawn[pc =${cureTarget}].ID}
+	/if (!${Bool[${targetID}]}) /return FALSE
+
+	/call check_Distance ${targetID} ${Spell[${cureSpell}].MyRange}
+	/if (!${Macro.Return}) /return FALSE
+
+	/casting "${cureSpell}" ${DefaultGem} "-targetid|${targetID}" -maxtries|3
+	/delay 6s ${Cast.Ready[${cureSpell}]}
+
+/return TRUE
+
+Sub athlib_Setup
+	/tgb on
+	/call BlockBuffsAtStartup
+
+	/call #IniToVar "${Character_Ini},Cures,CurePoison" 	CurePoisonSpell string outer
+ 	/call #IniToVar "${Character_Ini},Cures,CureDisease" 	CureDiseaseSpell string outer
+ 	/call #IniToVar "${Character_Ini},Cures,CureCurse" 		CureCurseSpell string outer
+
+ 	/declare doMyCures bool outer FALSE
+
+ 	/if (${Bool[${CurePoisonSpell}]} || ${Bool[${CureDiseaseSpell}]} || ${Bool[${CureCurseSpell}]}) {
+ 		/varset doMyCures TRUE
+ 	}
+/return
+
+SUB athlib_CharacterSettings
+  /if (${Select[${Me.Class.ShortName},DRU,SHM,CLR,PAL,BST,RNG]}) {
+    /call WriteToIni "${Character_Ini},Cures,CurePoison"
+    /call WriteToIni "${Character_Ini},Cures,CureDisease"
+    /call WriteToIni "${Character_Ini},Cures,CureCurse"
+  }
+/RETURN
+
+Sub athlib_MacroSettings
+/return
+
 Sub athlib_aliases
 	/alias /fic /bc find item count
 	/noparse /alias /leader /noparse /bcaa //if (${Select[${Group.Leader},${Me}]})
+	/noparse /alias /port /noparse /bcaa //if (${Select[${Group.Leader},${Me}]}) /g port
+	/squelch /alias /expmode /bc ExpGroup
 /return
 
 Sub athlib_Background_Events
 	/doevents ReportMana
 	/doevents FindItemCount
 	/doevents SkillUp
+	/doevents raid_invite
+	/doevents updateAliases
+	/doevents WhoNeedsTwo
+	/doevents report_aas
+	/doevents MyCure
 /return

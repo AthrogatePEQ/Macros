@@ -4,7 +4,7 @@
 | The following #define specifies which channel announcements made by this macro go to. It should always
 | be /gu, except when working on this macro, in which case it can be changed to /echo or /tell <charactername>
 | in order to cut back on /gu spam.
-#define    /announce    /gu
+#define    /announce    /rsay
 | Set the following define to the number of DeciSeconds (tenths of a second) of no activity
 | to wait before automatically dropping from a group.
 #define    IdleTimerDS        100

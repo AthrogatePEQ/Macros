@@ -16,6 +16,9 @@ Sub Raid_Coth_Setup
 Sub Raid_Coth_CharacterSettings
 /return
 
+sub Raid_Coth_MacroSettings
+/return
+
 Sub RCotH:Initialize
   /call #CreateVars string outer RCotH:SelectedPlayer RCotH:SelectedLocation RCotH:Return RCotH:RaidWindowUngroupedIndices RCotH:RaidWindowUngroupedSize RCotH:MageList
   /call #CreateVars int outer RCotH:RaidManifestStart RCotH:IAMCoHMaster RCotH:MageCount RCotH:CotHInProgress RCotH:RemainingCotH RCotH:StartTime

@@ -28,7 +28,9 @@ SUB Event_lootRelay(line, ChatSender, lootSetting)
 #event YourKill "You gained raid experience!"
 SUB Event_YourKill
 /if (${Debug} || ${Debug_Loot}) /echo |- Event_YourKill ==>
-  /if (${Auto_Loot}) /call loot_It
+  /if (${Auto_Loot}) {
+    /if (${Me.CombatState.NotEqual[Combat]} || ${combatLooting}) /call loot_It
+  }
 /if (${Debug} || ${Debug_Loot}) /echo <== Event_YourKill -|
 /RETURN
 
@@ -94,7 +96,7 @@ SUB loot_It
         /varset looted_Corpses ${looted_Corpses},${corpseID}
         /if (${Bool[${Macro.Return.Equal[SKIP_LOOT]}]}) /goto :SKIP_LOOT
 
-/if (${Debug} || ${Debug_Loot}) /bc Corpse.Items: ${Corpse.Items}
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: { ${Target.CleanName} } Corpse.Items: ${Corpse.Items}
         /if (!${Corpse.Items}) /goto :SKIP_LOOT
 
         /if (${Debug} || ${Debug_Loot}) /echo yourkill ${Macro.Return} corpse ${corpseID}
@@ -131,7 +133,7 @@ SUB loot_It
             |/echo vs5
             /varset lootSetting ${Macro.Return}
 
-/if (${Debug} || ${Debug_Loot}) /bc Checking: [${Corpse.Item[${i}].Name}] Loot Setting: ${lootSetting}
+/if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: Checking: [${Corpse.Item[${i}].Name}] Loot Setting: ${lootSetting}
 
 
             /if (${lootSetting.Find[Skip]}) /goto :skip_Item
@@ -178,7 +180,7 @@ SUB loot_It
                 /if (${Bool[${Me.Inventory[${itemSlot}].Items}]}) {
                   /for j 1 to 10
                     /if (${Me.Inventory[${itemSlot}].Item[${j}].Name.Equal[${itemName}]}) {
-                      /if (!${Me.Inventory[24].Item[${j}].FreeStack} ) {
+                      /if (!${Me.Inventory[${itemSlot}].Item[${j}].FreeStack} ) {
 /if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: I've got a stack, but its full, skipping
                         /goto :skip_Item
                       } else {
@@ -186,7 +188,7 @@ SUB loot_It
                       }
                     }
                   /next j
-                } else /if (${Me.Inventory[${itemSlot}].Name.Equal[${itemName}]} && !${Me.Inventory[24].Item[${j}].FreeStack} ) {
+                } else /if (${Me.Inventory[${itemSlot}].Name.Equal[${itemName}]} && !${Me.Inventory[${itemSlot}].Item[${j}].FreeStack} ) {
 /if (${Debug} || ${Debug_Loot}) /bc [Auto-Loot]: I've got a stack, but its full, skipping
                   /goto :skip_Item
                 }

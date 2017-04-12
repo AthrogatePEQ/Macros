@@ -63,15 +63,14 @@ Sub LootItemCMD_Setup
 Sub LootItemCMD_CharacterSettings
 /return
 
-Sub Event_LootItemCmd(line, chatSender, targetID, args)
-|/bc looting...
-  /if (!(${NetBots[${chatSender}].ID} && ${NetBots[${chatSender}].InZone})) /return
-  /if (!${Spawn[id ${targetID}].LineOfSight}) {
-    /bc Spawn id ${targetID} is not in line of sight.
-    /return
-  }
+Sub LootItemCMD_MacroSettings
+/return
 
-  /declare useItemByID int outer 0
+Sub Event_LootItemCmd(line, chatSender, targetID, args)
+  /if (!(${NetBots[${chatSender}].ID} && ${NetBots[${chatSender}].InZone})) /return
+
+
+  |/declare useItemByID int outer 0
   |/call #RequirePlugin MQ2Fusion
   |/varset useItemByID ${Macro.Return}
   |/if (${useItemByID}) {
@@ -79,24 +78,35 @@ Sub Event_LootItemCmd(line, chatSender, targetID, args)
   |  /varset useItemByID ${Macro.Return}
   |}
 
-  /call #CreateVars string outer LICReturn
+  /call #CreateVars string outer LICReturn ItemPart InclusionPart
+  /call #SplitInclusionArgs "${args}" ItemPart InclusionPart
+
+  /call #verifyEvent "${chatSender}" "${InclusionPart}"
+  /if (!${Macro.Return}) /return
+
+  /varset args ${ItemPart}
 
   /if (${line.Find[ needed ]}) {
     /if (${FindItemCount[=${args}]} || ${FindItemBankCount[=${args}]}) /return
     /call #StripItemLink "${args}" LICReturn
-    /if (${useItemByID}) {
-      /if (${FindItemByID[${HexToInt[${LICReturn.Left[6]}]}]} > 0) /return
-    } else {
-      /if (${FindItemCount[=${LICReturn}]} || ${FindItemBankCount[=${LICReturn}]}) /return
-    }
-    /actionrequest Loot ID ${targetID}
-    /delay 50 ${ActionLock.Request}
-    /if (!${ActionLock.Proceed}) {
-      /return
-    }
+    |/if (${useItemByID}) {
+    |  /if (${FindItemByID[${HexToInt[${LICReturn.Left[6]}]}]} > 0) /return
+    |} else {
+    |  /if (${FindItemCount[=${LICReturn}]} || ${FindItemBankCount[=${LICReturn}]}) /return
+    |}
+    /if (${FindItemCount[=${LICReturn}]} || ${FindItemBankCount[=${LICReturn}]}) /return
+    |/actionrequest Loot ID ${targetID}
+    |/delay 50 ${ActionLock.Request}
+    |/if (!${ActionLock.Proceed}) {
+    |  /return
+    |}
     /declare LootItemActionLocked string local Loot ID ${targetID}
   }
-  
+  /if (!${Spawn[id ${targetID}].LineOfSight}) {
+    /bc Spawn id ${targetID} is not in line of sight.
+    /return
+  }
+
   /if (!${Defined[licStopLoot]}) /declare licStopLoot int outer 0
   /if (!${Defined[licLastLooted]}) /declare licLastLooted string outer
   /varset licStopLoot 0
@@ -107,7 +117,8 @@ Sub Event_LootItemCmd(line, chatSender, targetID, args)
 	/declare licLootTotalTimer timer local 5s
   /declare licResumeNetFollow int local ${NetAdvPath.Status}
   /if (${licResumeNetFollow}==1) /squelch /netfollow pause
-  
+  /bc looting...
+
   /squelch /stick off
   /squelch /moveto save
   /squelch /moveto 5
@@ -169,7 +180,7 @@ Sub Event_LootItemCmd(line, chatSender, targetID, args)
 
     /call #StripItemLink "${args}" LICReturn
     /varset args ${LICReturn}
-|/bc args: ${args} LICReturn: ${LICReturn} slot: ${Corpse.Item[=${args}].InvSlot.ID}
+    |/bc args: ${args} LICReturn: ${LICReturn} slot: ${Corpse.Item[=${args}].InvSlot.ID}
     /if (${Bool[${Corpse.Item[=${args}].InvSlot.ID}]}) {
       /declare licItemSlot int local ${Corpse.Item[=${args}].InvSlot.ID}
       | Sanity check to make absolutely sure we are looting the right thing.
@@ -191,10 +202,13 @@ Sub Event_LootItemCmd(line, chatSender, targetID, args)
   :Cleanup
     /doevents flush StopLoot
     /squelch /moveto off
-    /if (${Window[LootWnd]}) /notify LootWnd DoneButton leftmouseup
+    /if (${Window[LootWnd]}) {
+      /notify LootWnd DoneButton leftmouseup
+      /bc Looted: ${args}
+    }
     /squelch /moveto load
     /if (${licResumeNetFollow}==1) /squelch /netfollow resume
-    /if (${Defined[LootItemActionLocked]}) /actionrelease ${LootItemActionLocked}
+    |/if (${Defined[LootItemActionLocked]}) /actionrelease ${LootItemActionLocked}
 /return
 
 Sub Event_StopLoot(line, chatSender)

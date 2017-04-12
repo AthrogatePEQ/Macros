@@ -73,6 +73,10 @@ robe_camp.mac
 ShowBonuses.mac
 forage.mac
 Inventory.mac
+gmsummon.mac
+e3Data.ini
+e3 Macro Inis/e3 Data.ini
+e3 Bot Inis/*
 e3 Bot Inis/zmtz/Zorak_PEQTGC.ini
 e3 Bot Inis/zmtz/Tuica_PEQTGC.ini
 e3 Bot Inis/zmtz/Bonham_PEQTGC.ini
@@ -166,6 +170,52 @@ e3 Bot Inis/zmtz_pre/Tepes_PEQTGC.ini
 e3 Bot Inis/zmtz_pre/Taxes_PEQTGC.ini
 e3 Bot Inis/zmtz_pre/Tuica_PEQTGC.ini
 e3 Bot Inis/zmtz_pre/Pontoon_PEQTGC.ini
+e3 Bot Inis/Balron_PEQTGC.ini
+e3 Bot Inis/Barrymanilow_PEQTGC.ini
+e3 Bot Inis/Bonham_PEQTGC.ini
+e3 Bot Inis/Bosom_PEQTGC.ini
+e3 Bot Inis/Boxsters_PEQTGC.ini
+e3 Bot Inis/Butfloss_PEQTGC.ini
+e3 Bot Inis/Caryelwes_PEQTGC.ini
+e3 Bot Inis/Clancybrown_PEQTGC.ini
+e3 Bot Inis/Clasper_PEQTGC.ini
+e3 Bot Inis/Cleavage_PEQTGC.ini
+e3 Bot Inis/Coprolite_PEQTGC.ini
+e3 Bot Inis/Craic_PEQTGC.ini
+e3 Bot Inis/Creamo_PEQTGC.ini
+e3 Bot Inis/Cremora_PEQTGC.ini
+e3 Bot Inis/Critters_PEQTGC.ini
+e3 Bot Inis/Deodorant_PEQTGC.ini
+e3 Bot Inis/Detras_PEQTGC.ini
+e3 Bot Inis/Ditherdown_PEQTGC.ini
+e3 Bot Inis/Drzoidberg_PEQTGC.ini
+e3 Bot Inis/Electricfence_PEQTGC.ini
+e3 Bot Inis/Flatulence_PEQTGC.ini
+e3 Bot Inis/Fondle_PEQTGC.ini
+e3 Bot Inis/Kalortpor_PEQTGC.ini
+e3 Bot Inis/Lane_PEQTGC.ini
+e3 Bot Inis/Lawndart_PEQTGC.ini
+e3 Bot Inis/Lube_PEQTGC.ini
+e3 Bot Inis/Magners_PEQTGC.ini
+e3 Bot Inis/Mammary_PEQTGC.ini
+e3 Bot Inis/Marmot_PEQTGC.ini
+e3 Bot Inis/Muddy_PEQTGC.ini
+e3 Bot Inis/Newskin_PEQTGC.ini
+e3 Bot Inis/Nramember_PEQTGC.ini
+e3 Bot Inis/Odor_PEQTGC.ini
+e3 Bot Inis/Ointment_PEQTGC.ini
+e3 Bot Inis/Pontoon_PEQTGC.ini
+e3 Bot Inis/Recall_PEQTGC.ini
+e3 Bot Inis/Redhotchili_PEQTGC.ini
+e3 Bot Inis/Skinf_PEQTGC.ini
+e3 Bot Inis/Spaceghost_PEQTGC.ini
+e3 Bot Inis/Stefani_PEQTGC.ini
+e3 Bot Inis/Taxes_PEQTGC.ini
+e3 Bot Inis/Tepes_PEQTGC.ini
+e3 Bot Inis/Tuica_PEQTGC.ini
+e3 Bot Inis/Zorak_PEQTGC.ini
+e3 Macro Inis/doors.ini
+e3 Macro Inis/e3 Data.ini
 e3 Macro Inis/doorquery.txt
 ground.mac
 e3 Bot Inis/Moinkay_CreamTest.ini

@@ -177,6 +177,7 @@ SUB EVENT_MoveHere(line, ChatSender, eventParams)
 		} else {
       /if (${Stick.Active}) /squelch /stick off
       /if (${NetAdvPath.Status}==1) /squelch /netfollow off
+      /if (${Assisting}  || ${Me.Combat}) /call AssistOff
 			| -Set WhereTo.
 			/declare moveTo_Name string local
 			/declare WhereTo string local ${If[${eventParams.Arg[1, ].Find[/]} || ${eventParams.Arg[1, ].Equal[me]} || ${eventParams.Arg[1, ].Equal[here]},${ChatSender},${eventParams.Arg[1, ]}]}
@@ -248,6 +249,7 @@ SUB EVENT_MoveHere(line, ChatSender, eventParams)
 #EVENT bark "#1# tell your party, 'Bark at #2# #3#'"
 SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_Bark ==>
+  |/echo received bark
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
@@ -261,12 +263,15 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 				/varset msgTarget ${Spawn[npc =${msgTarget}].ID}
 			} else /if (${SpawnCount[pet =${msgTarget}]}) {
 				/varset msgTarget ${Spawn[npc =${msgTarget}].ID}
+			} else /if (${SpawnCount[npc ${msgTarget}]}) {
+				/varset msgTarget ${Spawn[npc ${msgTarget}].ID}
 			} else {
 				/echo Could not find a SpawnID for [${msgTarget}].
 				/varset msgTarget NULL
 				/return
 			}
 		}
+		/if (${ChatSender.Equal[${Me}]}) /delay 3s
 		/declare barkTarget string outer ${Spawn[id ${msgTarget}].CleanName}
 		/declare barkReturned bool outer FALSE
 		/declare retryTimer timer local 35s
@@ -289,8 +294,8 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
       /if (${Me.Invis}) /doability hide
 			/if (${Me.Sneaking}) /doability sneak
     }
-    /call TrueTarget ${msgTarget}
 		:retry_Bark
+    /call TrueTarget ${msgTarget}
 		|/echo barking ${barkMsg} at ${barkTarget}
     /if (${Me.Invis}) /makemevisible
 
@@ -376,8 +381,9 @@ SUB EVENT_clickIt(line, ChatSender)
 |    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
   /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
 		/declare debug_clickit bool local FALSE
+    |/echo received clickit ${ChatSender} ${ChatSender.Equal[${Me}]}
 		/if (${debug_clickit}) /echo ${ChatSender} ${Zone.ShortName} ${Ini[e3 Macro Inis\doors.ini,${Zone.ShortName},${Zone.ShortName}#1].Length}
-		/if (${debug_clickit} && ${ChatSender.Equal[${Me.Name}]}) /delay 5s
+		/if (${ChatSender.Equal[${Me}]}) /delay 3s
     /if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /call interrupt
 		|**
 		| Move to the person who calls ClickIT
@@ -429,14 +435,14 @@ SUB EVENT_clickIt(line, ChatSender)
         /varset closestDoorID ${Switch.ID}
 				/if (${debug_clickit}) /echo no door in file, picked closest door ${Switch.ID}
 		  } else {
-			/echo \ay Aborting ClickIt: I could not find an acceptable door < 100 3D units
+        /echo \ay Aborting ClickIt: I could not find an acceptable door < 150 3D units
 			/return
 		}
 
 		}
 		/squelch /doortarget id ${closestDoorID}
 		/if (${DoorTarget.Distance} > 20) {
-			/declare moveTimer timer local 5s
+			/declare moveTimer timer local 3s
 			/netfollow off
 			/stick off
 			/squelch /face door fast
@@ -446,7 +452,7 @@ SUB EVENT_clickIt(line, ChatSender)
 			/if (${DoorTarget.Distance} > 20 && ${Bool[${moveTimer}]}) /goto :continueMoveTo
 		}
 		/if (${DoorTarget.Distance} > 20) {
-			/echo \ay Aborting ClickIt: I could not moveto < 20 units of ${DoorTarget.Name} within 10s
+			/echo \ay Aborting ClickIt: I could not moveto < 20 units of ${DoorTarget.Name} within 3s
 			/moveto off
 			/return
 		} else {
@@ -572,10 +578,10 @@ SUB EVENT_runThruZone(line, ChatSender, eventParams)
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-
+    /if (${ChatSender.Equal[${Me}]}) /delay 2s
 		/declare locToStart string local ${eventParams.Arg[1, ].Arg[1,,]},${eventParams.Arg[1, ].Arg[2,,]}
 		/declare startHeading float local ${eventParams.Arg[1, ].Arg[3,,]}
-		/declare retryTimer timer local 300
+		/declare retryTimer timer local 15s
 		/declare miscTimer timer local
 		/declare startZone int local ${Zone.ID}
 	
@@ -607,13 +613,13 @@ SUB EVENT_runThruZone(line, ChatSender, eventParams)
 					}
 				} else {
 				
-					| -Face the zone and run foward for 15 seconds.
+					| -Face the zone and run foward for 6 seconds.
 					/face fast heading ${Math.Calc[${startHeading}*-1]}
 					/delay 5
 					/keypress forward hold
 					
 					| -Wait to zone.
-					/delay 100 !${Zone.ID} || ${Zone.ID} != ${startZone}
+					/delay 6s !${Zone.ID} || ${Zone.ID} != ${startZone}
 					/if (!${Zone.ID}) /delay 600 ${Zone.ID}
 	
 					| -Check if I zoned.
@@ -651,18 +657,28 @@ SUB EVENT_dropInvis(line, ChatSender)
 /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_dropInvis -|
 /RETURN
 
-|----------------------------------------|
-|- Drops invis on connected NetBots.	-|
+
 |----------------------------------------|
 #EVENT dropBuff "<#1#> Drop Buff #2#"
 SUB EVENT_dropBuff(line, ChatSender, buffName)
   /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_dropInvis ==>
 | -Verify the event
   /call verifyEvent "${ChatSender}" "${line}"
+  /echo ${buffName}
   /if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
 |    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
   /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
+    /if (${buffName.Equal[All]}) {
+      /declare i int local 1
+      /for i 1 to 22
+      /if (${Me.Buff[${i}].ID}) {
+        /squelch /removebuff ${Me.Buff[${i}].Name}
+        /delay 1
+      }
+      /next i
+    } else {
     /removebuff ${buffName}
+  }
   }
   /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_dropInvis -|
 /RETURN
@@ -1007,12 +1023,11 @@ SUB EVENT_castItem(line, itemToUse)
 |----------------------------------------------------|
 |- Ends the macro before a bot finishes camping.	-|
 |----------------------------------------------------|
-#EVENT EndMacro "It will take about 5 more seconds to prepare your camp."
+#EVENT EndMacro "It will take about 20 more seconds to prepare your camp."
 SUB EVENT_EndMacro
 	/echo User is camping, ending macro.
 	/endmacro
 /RETURN
-
 
 
 |------------------------------------------------|
@@ -1028,7 +1043,8 @@ SUB EVENT_medOn(line, ChatSender)
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
 		| Check that I'm a caster, and not a bard
 |		/if (${Me.Class.CanCast} && ${Me.Class.ShortName.NotEqual[BRD]}) {
-		/if (${Me.Class.ShortName.NotEqual[BRD]} && ${Me.Class.ShortName.NotEqual[WAR]}) {	
+		|/if (${Me.Class.ShortName.NotEqual[BRD]} && ${Me.Class.ShortName.NotEqual[WAR]}) {
+    /if (${Me.Class.ShortName.NotEqual[BRD]}) {
 			| Check range
 			/if (${Spawn[pc ${ChatSender}].Distance} < ${MaxResponseDist}) {
 				/docommand ${ChatToggle} Meditating...
@@ -1205,7 +1221,7 @@ SUB event_flushConsent
 #event gatherCorpses "[MQ2] Gather corpse"
 SUB event_gatherCorpses
 /if (${Debug} || ${Debug_Basics}) /echo |- EVENT_gatherCorpses ==>
-  /bc Consent ${Me.CleanName}
+  |/bc Consent ${Me.CleanName}
 	/declare i int local
 	/for i 1 to ${SpawnCount['s radius 100]}
 		/if (${Select[${Spawn[${NearestSpawn[${i},pccorpse radius 100]}].CleanName.Arg[1,']},${consentTargets}]}) {
@@ -1796,7 +1812,19 @@ SUB EVENT_reportMana(line,ChatSender)
 }
 /RETURN
 
-
+|---------------------------|
+#EVENT campDesktop "<#1#> CampDesktop"
+SUB campDesktop(line,ChatSender)
+	/if (${Debug} || ${Debug_Basics}) /echo |- EVENT_reportMana ==>
+	/call verifyEvent "${ChatSender}" "${line}"
+	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+	|-    |-----------Valid User----------|    |-----------In Zone-------------|	|--------Included Bot-----------|
+	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
+		/camp desktop
+		/end
+	}
+	/if (${Debug} || ${Debug_Basics}) /echo <== EVENT_reportMana [${Me.PctMana}m] -|
+/RETURN
 
 Sub basics_Setup
 /call INItoVar "${advSettings_Ini},Debug,Debug Basics (On/Off)" Debug_Basics bool outer
@@ -1817,7 +1845,7 @@ Sub basics_Setup
 	/declare medBreak bool outer FALSE
 	/declare medBreak_Hold bool outer FALSE
 	/declare medbreak_Popup_Timer timer outer
-	/declare clickitRandomDelay int outer 10
+	/declare clickitRandomDelay int outer 7
 	
 	/if (${Ini[${genSettings_Ini},ExpGroup,NoKS_WeaponSet].Length}) 		/call IniToVar "${genSettings_Ini},ExpGroup,NoKS_WeaponSet" NoKSWeaponSet string outer
 	/if (${Ini[${genSettings_Ini},ExpGroup,KS_WeaponSet].Length}) 			/call IniToVar "${genSettings_Ini},ExpGroup,KS_WeaponSet" KSWeaponSet string outer
@@ -1888,6 +1916,7 @@ Sub basics_Background_Events
   /doevents runThruZone
   /doevents macroHelp
   /doevents exp_group
+  /doevents campdesktop
 |		/varset event_counter 1
 |	} else {
 |		/varcalc event_counter ${event_counter}+1

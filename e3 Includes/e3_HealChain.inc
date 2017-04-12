@@ -41,6 +41,10 @@ SUB EVENT_build_HealChain(line, ChatSender, eventParams)
 				} else {
 					/delay 10
 					/tell ${ChatSender} Add Me
+					/if (!${Me.Gem[Complete Heal]}) {
+						/memorize "Complete Heal" 7
+						/delay 2s
+					}
 				}
 			}
 		}
@@ -356,7 +360,7 @@ SUB EVENT_engage_ChainHeal(ling, ChatSender, chainTiming_Setting, chainTank_Sett
 #EVENT end_ChainHeal "#1# tells the raid#*#Stop chain#*#"
 #EVENT end_ChainHeal "#1# tell your raid#*#Stop chain#*#"
 SUB EVENT_end_ChainHeal(line, ChatSender)
-/if (${Debug} || ${Debug_HealChain}) /echo |- EVET_end_ChainHeal ==>
+/if (${Debug} || ${Debug_HealChain}) /echo |- EVENT_end_ChainHeal ==>
 	
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
@@ -367,7 +371,7 @@ SUB EVENT_end_ChainHeal(line, ChatSender)
 		/varset Chain_Status PAUSE_CHAIN
 	}
 
-/if (${Debug} || ${Debug_HealChain}) /echo <== EVET_end_ChainHeal -|
+/if (${Debug} || ${Debug_HealChain}) /echo <== EVENT_end_ChainHeal -|
 /RETURN
 
 | There is a place for the chain to break down in this script
@@ -446,11 +450,11 @@ SUB set_ChainTarget
 				/varset Chain_Target ${Spawn[pc ${Chain_TankList.Arg[${i},,]}].CleanName}
 				/if (${Debug} || ${Debug_HealChain}) /echo |- set_ChainTarget -| Chain_Target= [${Chain_Target}].
 			} else {
-				/varcalc i ${i} + 1
+				/varcalc i ${i}+1
 				/goto :check_Chain_TankList
 			}
 		} else {
-			/varcalc i ${i} + 1
+			/varcalc i ${i}+1
 			/goto :check_Chain_TankList
 		}
 	}
@@ -504,7 +508,7 @@ SUB nextCH
 	/rs ${Time.Time24} [${Me.PctMana}m] Casting ${If[${Me.Class.ShortName.Equal[clr]},CH,KR]} on ${Spawn[pc =${Chain_Target}].Name} next heal in [${Chain_Timing}s]
 	| /echo /if (${Chain_TimingAdjustment}) /delay ${Chain_TimingAdjustment}
 	| /if (${Chain_TimingAdjustment}) /delay ${Chain_TimingAdjustment}
-	/casting "${If[${Me.Class.ShortName.Equal[clr]},Complete Heal,Karana's Renewal]}" "-targetid|${Spawn[pc =${Chain_Target}].ID}"
+	/casting "${If[${Me.Class.ShortName.Equal[clr]},Complete Heal,Karana's Renewal]}" "-targetid|${Spawn[pc =${Chain_Target}].ID}" -maxtries|3
 	| Check for timing adjustment on next cast
 	/if (${castReturn.Equal[SUCCESS]} && ${adjustment_Timer} > 0) /varset Chain_TimingAdjustment ${adjustment_Timer}
 /if (${Debug} || ${Debug_HealChain}) /echo <== nextCH -|
@@ -526,9 +530,10 @@ SUB EVENT_set_LastHealer(line, ChatSender, time_Hour, time_Min, time_Sec)
 		/declare next_Delay int local
 		
 		/varcalc next_Delay ${time_Sec} + ${Chain_Timing}
-
-		/varset Chain_NextHealTimer ${Math.Calc[${next_Delay} - ${Time.Time24.Arg[3,:]}].Int}s
-    /if (${Chain_NextHealTimer}>=60) /varcalc ${Chain_NextHealTimer}-60
+    /if (${Debug} || ${Debug_HealChain}) /echo next_Delay ${next_Delay}, time_Sec ${time_Sec}, Chain_Timing ${Chain_Timing}
+		/varset Chain_NextHealTimer ${Math.Calc[${Math.Calc[${next_Delay} - ${Time.Time24.Arg[3,:]}].Int}*10]}
+    /if (${Chain_NextHealTimer}>=600) /varcalc Chain_NextHealTimer ${Chain_NextHealTimer}-600
+    /if (${Chain_NextHealTimer}>=60) /varcalc Chain_NextHealTimer ${Chain_NextHealTimer}-60
 
     /if (${Debug} || ${Debug_HealChain}) /echo |- Chain_NextHealTimer -| set to ${Chain_NextHealTimer}: ${next_Delay} - ${Time.Time24.Arg[3,:]}
 		/varset Chain_LastHealer ${ChatSender}
@@ -572,7 +577,7 @@ SUB chainHeal_Events
 /RETURN
 
 Sub healChain_Background_Events
-
+  |/if (${Me.Class.ShortName.Equal[CLR]} || ${Me.Class.ShortName.Equal[DRU]}) {
 	/doevents build_HealChain
   /doevents join_HealChain
   /doevents set_TankList
@@ -580,6 +585,7 @@ Sub healChain_Background_Events
 	/doevents unload_HealChain
   /doevents end_ChainHeal
   /call chainHeal_Events
+  |}
 /return
 
 SUB healChain_MacroSettings

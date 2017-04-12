@@ -36,7 +36,7 @@ SUB EVENT_ToggleOfftank(line, ChatSender, buffSetting)
     /if (${mystring.Equal[on]}) {
       /varset PauseOfftank 0
       /varset otFlag TRUE
-    } else /if (${buffSetting.Equal[off]}) {
+    } else /if (${mystring.Equal[off]}) {
       /varset PauseOfftank 1
       /varset otFlag FALSE
     }

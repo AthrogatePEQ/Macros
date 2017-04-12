@@ -180,3 +180,9 @@ Sub tanking_Setup
   /declare peelTarget int outer 0
   /declare peelTankOriginalAssistTarget int outer 0
 /return
+
+sub tanking_MacroSettings
+/return
+
+Sub tanking_aliases
+/return

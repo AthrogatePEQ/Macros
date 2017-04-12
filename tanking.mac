@@ -45,8 +45,9 @@
 #include e3 Includes\e3_Assists.inc
 #include e3 Includes\e3_AutoExpAdjust.inc
 #include e3 Includes\e3_BlockBuffs.inc
+#include e3 Includes\HandItemCMD.inc
 
-#event AssistStart "<#*#> Assist on #1#"
+#event AssistStart "<#1#> Assist on #2#"
 #event RotateExpGroup1 "[MQ2] RotateExpGroup"
 #event RotateExpGroup2 "[MQ2] RotateExpGroup #1#"
 #event DoLessons "[MQ2] DoLessons#*#"
@@ -74,7 +75,8 @@ Sub Main
   }
 
   |/declare Character_Ini string Bot Inis\${MacroQuest.Server}-${Me.CleanName}
-  /declare Character_Ini string e3 Bot Inis\\${Me.CleanName}_PEQTGC
+  |/declare Character_Ini string e3 Bot Inis\\${Me.CleanName}_PEQTGC
+  /declare Character_Ini string ${Ini[${MacroData_Ini},File Paths,Bot Settings]}
   /declare genSettings_Ini string outer ${Ini[${MacroData_Ini},File Paths,General Settings]}
   /echo ${Character_Ini}
   |/echo ${genSettings_Ini}
@@ -122,6 +124,7 @@ Sub Main
   :MainLoop
     /doevents
     /if (!${Me.Casting.ID} && !${Me.Combat} ) /call BuffSelf
+    /if (!${Me.Casting.ID} && !${Me.Combat} && (!${Defined[check_things_timer]} || ${check_things_timer} == 0)) /call check_things
 
     /if (${Zone.ID} != ${ZoneID}) {
       |Zoned - Reread the configuration File.
@@ -219,11 +222,18 @@ Sub Event_DoAutoKill(line, args)
 | AssistMe and <Auto Kill>.
 |
 | Example: Assist On TARGET
-| /bc "<#*#> Assist on #1#"
-Sub Event_AssistStart(line, id)
-  /varset killingStuff 1
-  /varset killTargetID ${id}
-  /varset killCount 0
+| /bc "<#1#> Assist on #2#"
+Sub Event_AssistStart(line, ChatSender, id)
+|/echo Event_AssistStart(line, ChatSender, id): ChatSender: ${ChatSender}, id: ${id}
+  /call verifyEvent "${ChatSender}" "${line}"
+|  /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+|/echo ChatSender: ${ChatSender} User: ${Bool[${Macro.Return.Arg[2,_]}]} Zone: ${Bool[${Macro.Return.Arg[4,_]}]} In Range: ${Bool[${Macro.Return.Arg[5,_]}]}
+  |    |-----------Valid User----------|    |-----------In Zone-------------|    |------------In Range------------|
+  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
+    /varset killingStuff 1
+    /varset killTargetID ${id}
+    /varset killCount 0
+  }
 /return
 
 Sub Event_RotateExpGroup1
@@ -380,7 +390,7 @@ Sub GetIniArray(File, Section, Key, ArrayName, ArrayScope)
 SUB buffSelf
 /if (${Debug} || ${Debug_BuffCheck}) /echo |- buffSelf ==>
 
-   /if (!${UserBuffCheck} || ${Me.Combat} || ${Me.Moving} || ${Me.XTarget} || (${Defined[LessonTimer]} && ${LessonTimer}>0)) /return
+   /if (!${UserBuffCheck} || ${Me.Combat} || ${Me.Moving} || ${Me.XTarget} || ${Me.Invis} || (${Defined[LessonTimer]} && ${LessonTimer}>0)) /return
 
    | -Declare local variables.
    /declare castName string local
@@ -750,4 +760,15 @@ Sub Event_whois(line, ChatSender, EventParms)
 
 Sub Background_Events
 
+/return
+
+sub check_things
+  /if (!${Defined[check_thing]}) /return
+
+  /if ( ${Me.PctAggro} > 0 ) {
+    /popup ${Me} I have aggro
+    /beep
+    /if (!${Defined[check_things_timer]}) /declare check_things_timer timer outer
+    /varset check_things_timer  1000
+  }
 /return

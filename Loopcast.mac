@@ -1,5 +1,5 @@
 #turbo
-Sub Main
+Sub Main(gemNumber)
 
 	/if (${Me.Sitting}) {
 	  /stand

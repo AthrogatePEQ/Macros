@@ -88,12 +88,17 @@ sub Event_Rez(string line, string ChatSender)
     /call check_CorpseRezzable
     |/echo checkcanrez ${Macro.Return}
     /if (${canRez}==1) {
+      /call check_Mana "rezArray2D" 1
+      /if (${Macro.Return}) {
       /call check_Ready "rezArray2D" 1
       /if (${Macro.Return}) {
         /tell ${ChatSender} Wait4Rez
         /call e3_cast ${Spawn[${ChatSender}'s].ID} "rezArray2D" 1
       } else {
         /echo ${rezArray2D[1,${iCastName}]} is not ready to cast
+      }
+    } else {
+        /echo Not enough mana to cast ${rezArray2D[1,${iCastName}]}
       }
     } else {
       /tell ${ChatSender} Your corpse ${Target.Name} is not eligible for rez
@@ -287,8 +292,8 @@ Sub defineRezSpell
     /varset rezSpell Blessing of Resurrection
   } else /if (${Me.Book[Reviviscence]}) {
     /varset rezSpell Reviviscence
-  } else /if (${Me.Book[Resurection]}) {
-    /varset rezSpell Resurection
+  } else /if (${Me.Book[Resurrection]}) {
+    /varset rezSpell Resurrection
   } else /if (${Me.Book[Restoration]}) {
     /varset rezSpell Restoration
   } else /if (${Me.Book[Resuscitate]}) {
@@ -377,18 +382,34 @@ sub Event_AE_CR(string line)
 /if (${Me.Class.ShortName.Equal[CLR]}) {
    /if (${Me.AltAbilityReady[Mass Group Buff]} && ${Me.AltAbilityReady[Celestial Regeneration]}) {
       /bc MGB Celestial Regeneration inc...
-      /rs MGB Celestial Regeneration inc...
      /casting "Mass Group Buff|alt" "-maxtries|3"
+     /delay 5 !${Me.AltAbilityReady[Mass Group Buff]}
      /delay 5
      /casting "Celestial Regeneration|alt" "-maxtries|3"
+     /delay 5 !${Me.AltAbilityReady[Celestial Regeneration]}
+     /casting "Celestial Regeneration|alt" "-maxtries|3"
+     /rs MGB Celestial Regeneration inc...
    } else /if (!${Me.AltAbilityReady[Mass Group Buff]}) {
       /bc Mass Group Buff is not available...
    } else /bc Celestial Regeneration is not available...
 }
 /return
 
+|----------------------------------------------------------------------------|
+#event WardofPurity "#*# tells you, 'WardofPurity'"
+sub Event_WardofPurity(string line)
+  /if (${Me.Class.ShortName.Equal[CLR]}) {
+    /if (${Me.AltAbilityReady[Ward of Purity]}) {
+      /bc Ward of Purity inc...
+      /casting "Ward of Purity|alt" "-maxtries|3"
+      /rs Ward of Purity inc...
+    } else /bc Ward of Purity is not available...
+  }
+/return
+
 Sub CLR_Background_Events
   /doevents AE_CR
   /doevents AE_Rez
   /doevents Rez
+  /doevents WardofPurity
 /return

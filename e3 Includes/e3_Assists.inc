@@ -82,7 +82,7 @@ SUB event_Assist(line, ChatSender, int MobID)
             } else /if (${AssistType.Equal[ranged]}) {
               /if (${Debug} || ${Debug_Assists}) /echo autofire on
               /squelch /face fast id ${AssistTarget}
-              /autofire on
+              /if (!${Me.AutoFire}) /autofire on
               /if (${Target.Distance} < 35 || ${Target.Distance} > ${RangedStickDistance}) /squelch /stick hold moveback ${RangedStickDistance}
             }
 					/if (${Debug} || ${Debug_Assists}) /echo Assist=${Assisting} || AssistTarget=${AssistTarget} || AllowControl=${AllowControl}
@@ -207,10 +207,11 @@ SUB check_AssistStatus
 	/echo AssistTarget = [${AssistTarget}] || AllowControl = [${AllowControl}] || Distance check = [${Spawn[id ${AssistTarget}].Distance} < ${MaxAssistDistance}] || TargetType = [${Spawn[id ${AssistTarget}].Type}]
 }
   /if (${Me.Feigning}) {
-    /if (${Select[${Me.Class.ShortName},NEC,SHD,MNK]}) {
-      /if (${Debug} || ${Debug_Assists}) /echo I'm feigned, skipping assist checks
-      /return
-    } else /stand
+    |/if (${Select[${Me.Class.ShortName},NEC,SHD,MNK]}) {
+    |  /if (${Debug} || ${Debug_Assists}) /echo I'm feigned, skipping assist checks
+    |  /return
+    |} else
+    /stand
   }
   |if target is dead or simply doesnt exist assistoff
   /if (!${Bool[${Spawn[id ${AssistTarget}].Type.NotEqual[Corpse]}]}) {
@@ -260,8 +261,7 @@ SUB check_AssistStatus
       }
     }
   }
-  |/echo MyAbilities ${MyAbilities.Size}
-  /if (!${Me.Casting.ID} && ${Me.Combat} && ${MyAbilities.Size}) /call CombatAbilities
+  /if (!${Me.Casting.ID} && ${Me.Combat} && ${Abilities2D.Size[1]}) /call CombatAbilities
 /if (${Debug} || ${Debug_Assists}) /echo <== check_AssistStatus -|
 /RETURN
 
@@ -272,59 +272,56 @@ SUB check_AssistStatus
 SUB CombatAbilities
 |/varset Debug TRUE
   /if (${Debug} || ${Debug_Assists}) /echo |- CombatAbilities ==>
-  /declare abilityName string local
-  /declare minEnd int local
   /declare i int local
-  |/echo in CombatAbilities
 | Prereq/priorities
-  /if (${doTaunt}) {
-    /if (${Select[${Me.TargetOfTarget},${Me.CleanName}]}==0) /doability Taunt
+  /if (${doTaunt} && ${Me.AbilityReady[Taunt]} && ${Me.PctAggro}< 100) /doability Taunt
+  /if (${smartTaunt} && ${Me.AbilityReady[Taunt]} && ${Bool[${Me.TargetOfTarget.Class.ShortName}]} && ${Select[${Me.TargetOfTarget.Class.ShortName},WAR,PAL,SHD]}==0) {
+    /bc Taunting ${Target.CleanName} : ${Me.TargetOfTarget.Class.ShortName} ${Me.TargetOfTarget.Name} has aggro
+    /doability Taunt
   }
-| For 1 to the size of MyAbilities array, use each ability.
-  /for i 1 to ${MyAbilities.Size}
-  /varset abilityName ${MyAbilities[${i}].Arg[1,/]}
- | /echo MyAbilities  ${i} ${abilityName}
-    |- Class abilities
-  /if (${Me.Ability[${abilityName}]}) {
-    /if (${abilityName.Equal[Bash]}) {
-      /if (!${Select[${Me.Inventory[Offhand].Type},Shield]} && !${Me.AltAbility[2 Hand Bash]}) /next i
-    }
-    /if (${Me.AbilityReady[${abilityName}]}) {
-      /doability "${abilityName}"
-        /delay 2 !${Me.AbilityReady[${abilityName}]}
-    }
-    |- AA, only those with 0 cast time can go here
-  } else /if (${Me.AltAbility[${abilityName}]}) {
-    /if (${Me.AltAbilityReady[${abilityName}]}) {
-      /casting "${abilityName}" alt
-        /delay 3 !${Me.AltAbilityReady[${abilityName}]}
-      |/echo casting ${abilityName}
-    }
-    |- Discipline, no disc with a duration can go here
-  } else /if (${Me.CombatAbility[${abilityName}]}) {
-    |/echo car ${Me.CombatAbilityReady[${abilityName}]} ${Me.CombatAbility[${abilityName}]} ${abilityName} ${Me.CombatAbilityReady[${abilityName}]} ${Me.CombatAbilityReady[Backstab]}
-    /if (${Me.CombatAbilityReady[${abilityName}]}) {
-      | Check for MinEnd
-      /if (${MyAbilities[${i}].Find[/MinEnd|]}) {
-        /call argueString MinEnd "${MyAbilities[${i}]}"
-        /varset minEnd ${Macro.Return}
-      } else {
-        /varset minEnd 0
-      }
-      |/echo myend ${Me.PctEndurance} minend ${minEnd} endcost ${Spell[${abilityName}].EnduranceCost} ${Me.Endurance}
-      /if (${Me.PctEndurance} >= ${minEnd} && ${Spell[${abilityName}].EnduranceCost} <= ${Me.Endurance}) {
-        |/echo ready ${abilityName} ${Me.CombatAbilityReady[${abilityName}]}
-        /disc ${abilityName}
-        /delay 3 !${Me.CombatAbilityReady[${abilityName}]}
-        |/echo post disc
-      }
-    }
-}
-  /next i
+
 
   /if (${AutoEvade}) /call AutoEvade
 
+  /for i 1 to ${Abilities2D.Size[1]}
+    |/echo ${Abilities2D[${i},${iCastName}]}
+    |skip the ability if current aggro is less than defined PctAggro or the taret is not a Named
+    /if (${Abilities2D[${i},${iPctAggro}]} > 0 && (${Me.PctAggro} < ${Abilities2D[${i},${iPctAggro}]} || !${Target.Named})) {
+      /if (${Debug} || ${Debug_Assists}) /echo skipping ${Abilities2D[${i},${iCastName}]}, current aggro ${Me.PctAggro} defined ${Abilities2D[${i},${iPctAggro}]} named ${Target.Named}
+      /next i
+    }
+    /if (${Abilities2D[${i},${iCastType}].Equal[Ability]}) {
+      /if (${Abilities2D[${i},${iCastName}].Equal[Bash]}) {
+      /if (!${Select[${Me.Inventory[Offhand].Type},Shield]} && !${Me.AltAbility[2 Hand Bash]}) /next i
+    }
+      /if (${Me.AbilityReady[${Abilities2D[${i},${iCastName}]}]}) {
+        /doability "${Abilities2D[${i},${iCastName}]}"
+        /delay 2 !${Me.AbilityReady[${Abilities2D[${i},${iCastName}]}]}
+    }
+    |- AA, only those with 0 cast time can go here
+    } else /if (${Abilities2D[${i},${iCastType}].Equal[AA]}) {
+      /if (${Me.AltAbilityReady[${Abilities2D[${i},${iCastName}]}]}) {
+        /casting "${Abilities2D[${i},${iCastName}]}" alt
+        /delay 3 !${Me.AltAbilityReady[${Abilities2D[${i},${iCastName}]}]}
+      |/echo casting ${abilityName}
+    }
+    |- Discipline, no disc with a duration can go here
+    } else /if (${Abilities2D[${i},${iCastType}].Equal[Disc]}) {
+    |/echo car ${Me.CombatAbilityReady[${abilityName}]} ${Me.CombatAbility[${abilityName}]} ${abilityName} ${Me.CombatAbilityReady[${abilityName}]} ${Me.CombatAbilityReady[Backstab]}
+      /if (${Me.CombatAbilityReady[${Abilities2D[${i},${iCastName}]}]}) {
+        |/echo ${Abilities2D[${i},${iCastName}]} myend ${Me.PctEndurance} >= minend ${Abilities2D[${i},${iMinEnd}]} and endcost ${Spell[${Abilities2D[${i},${iCastName}]}].EnduranceCost} <= ${Me.Endurance}
+        /if (${Me.PctEndurance} >= ${Abilities2D[${i},${iMinEnd}]} && ${Spell[${Abilities2D[${i},${iCastName}]}].EnduranceCost} <= ${Me.Endurance}) {
+        |/echo ready ${abilityName} ${Me.CombatAbilityReady[${abilityName}]}
+          /disc ${Abilities2D[${i},${iCastName}]}
+          /delay 3 !${Me.CombatAbilityReady[${Abilities2D[${i},${iCastName}]}]}
+        |/echo post disc
+      }
+    }
+    }
+  /next i
+
   /if (${Debug} || ${Debug_Assists}) /echo <== CombatAbilities -|
+|/varset Debug FALSE
 /RETURN
 
 |--------------------------------------------------------|
@@ -461,21 +458,36 @@ SUB check_Nukes
 
    /for s 1 to ${Nukes2D.Size[1]}
     /varset castIndex ${s}
+    /if (${Debug} || ${Debug_Assists}) /echo ${s} ${castIndex} ${Nukes2D[${castIndex},${iCastName}]}
 
     | skip casting if a delay is defined
     /if (${castDelay${Nukes2D[${castIndex},${iCastID}]}}) {
       /if (${Debug} || ${Debug_Assists}) /echo skipping nukes, /delay from previous cast
       /return
     }
+    |if im burning and /noburn is set, skip the spell
+    |if noburn and rotate is defined, then skip this spell and set lastSuccessfulCast to this spell, so the next spell can be used
+    /if ((${use_QuickBurns} || ${use_LongBurns} || ${use_FullBurns}) && ${Nukes2D[${castIndex},${iNoBurn}]}) {
+      /if (${Nukes2D[${castIndex},${iRotate}]} && ${Nukes2D.Size[1]} > 1) {
+        /if (${Debug} || ${Debug_Assists}) /echo setting lastSuccessfulCast to ${lastSuccessfulCast} because noburn and rotate defined
+        /varset lastSuccessfulCast ${Nukes2D[${castIndex},${iCastName}]}
+      } else {
+        /if (${Debug} || ${Debug_Assists}) /echo \ay skipping cast of ${Nukes2D[${castIndex},${iCastName}]}, i am burning and /NoBurn is set
+        /goto :skipCast
+      }
+    }
     | if /rotate is defined, and the current array index was the last successful cast, skip to next index
-    /if (${Nukes2D[${s},${iCastName}].Equal[${lastSuccessfulCast}]} && ${Nukes2D[${s},${iRotate}]} && ${Nukes2D.Size[1]} > 1) {
+    /if (${Nukes2D[${castIndex},${iCastName}].Equal[${lastSuccessfulCast}]} && ${Nukes2D[${castIndex},${iRotate}]} && ${Nukes2D.Size[1]} > 1) {
       /if (${Debug} || ${Debug_Assists}) /echo skipping cast of ${Nukes2D[${castIndex},${iCastName}]} /rotate is defined
       /goto :skipCast
     }
     | if i have Gift Of Mana find a spell with /GoM
     /if (${Bool[${Me.Song[Gift of Mana].ID}]}) {
       /for m 1 to ${Nukes2D.Size[1]}
-        /if (${Nukes2D[${m},${iGiftOfMana}]}) /varset castIndex ${m}
+        /if (${Nukes2D[${m},${iGiftOfMana}]}) {
+          /varset castIndex ${m}
+          /varset lastSuccessfulCast 0
+        }
       /next m
     }
     |if i have aggro and /noaggro is set, skip the spell
@@ -483,13 +495,15 @@ SUB check_Nukes
       /if (${Debug} || ${Debug_Assists}) /echo \ay skipping cast of ${Nukes2D[${castIndex},${iCastName}]}, i have aggro and /noaggro is set
       /goto :skipCast
     }
-    |if im burning and /noburn is set, skip the spell
-    /if ((${use_QuickBurns} || ${use_LongBurns} || ${use_FullBurns}) && ${Nukes2D[${castIndex},${iNoBurn}]}) {
-      /if (${Debug} || ${Debug_Assists}) /echo \ay skipping cast of ${Nukes2D[${castIndex},${iCastName}]}, i am burning and /NoBurn is set
+    |only cast if my aggro is greater than PctAggro and the target is a Named
+    /if (${Nukes2D[${castIndex},${iPctAggro}]} > 0 && (${Me.PctAggro} < ${Nukes2D[${castIndex},${iPctAggro}]} || !${Target.Named})) {
+      /if (${Debug} || ${Debug_Assists}) /echo \ay skipping cast of ${Nukes2D[${castIndex},${iCastName}]}, my aggro ${Me.PctAggro} is < PctAggro ${Nukes2D[${castIndex},${iPctAggro}]}
+      /if (${Debug} || ${Debug_Assists}) /echo ${Nukes2D[${castIndex},${iPctAggro}]} ${Me.PctAggro} < ${Nukes2D[${castIndex},${iPctAggro}]} !${Target.Named}
       /goto :skipCast
     }
+
     | if i have spell damage reduction recourse and the mob has more than 25% health or i have < 10% mana, skip cast.  cast anyway if i have GoM to avoid losing it
-    /if ((${Me.Buff[Weave of Weakness].ID} || ${Me.Buff[Flames of Weakness].ID}) && (${Target.PctHPs} > 25 || ${Me.PctMana} < 10) && !${Bool[${Me.Song[Gift of Mana].ID}]}) {
+    /if ((${Me.Buff[Weave of Weakness].ID} || ${Me.Buff[Flames of Weakness].ID}) && (${Target.PctHPs} > 25 || ${Me.PctMana} < 10) && !${Bool[${Me.Song[Gift of Mana].ID}]} && !(${use_QuickBurns} || ${use_LongBurns} || ${use_FullBurns})) {
       /if (${Debug} || ${Debug_Assists}) /echo \ay skipping cast of ${Nukes2D[${castIndex},${iCastName}]}, i have spell damage reduction
       /goto :skipCast
     }
@@ -853,12 +867,13 @@ SUB DoTs_OnCommand
 |----------------------------|
 |- Turns AE functions on.	  -|
 |----------------------------|
-#event AEOn "<#1#> AllAE on"
+#event AEOn "<#1#> AllAE on#*#"
 #event AEOn "#1# tells you#*#AllAE on'"
 SUB Event_AEOn(line, ChatSender)
 /if (${Debug} || ${Debug_Assists}) /echo |- Event_AllAEOn ==>
   /call verifyEvent "${ChatSender}" "${line}"
   /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
+  |/echo ${ChatSender} ret ${Macro.Return} ln ${line}
 |    |-----------Valid User----------|    |---------Included Bot----------|    |-------------In Zone-----------|    |------------In Range------------|
   /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
     /if (${PBAE_Spells2D.Size[1]} || ${TargetAE_Spells2D.Size[1]}) {
@@ -875,7 +890,7 @@ SUB Event_AEOn(line, ChatSender)
 |----------------------------|
 |- Turns PBAE functions on.	-|
 |----------------------------|
-#event PBAEOn "<#1#> PBAE on"
+#event PBAEOn "<#1#> PBAE on#*#"
 #event PBAEOn "#1# tells you#*#PBAE on'"
 SUB Event_PBAEOn(line, ChatSender)
   /if (${Debug} || ${Debug_Assists}) /echo |- Event_PBAEOn ==>
@@ -896,7 +911,7 @@ SUB Event_PBAEOn(line, ChatSender)
 |----------------------------------|
 |- Turns Target AE functions on.	-|
 |----------------------------------|
-#event TargetAEOn "<#1#> TargetAE on"
+#event TargetAEOn "<#1#> TargetAE on#*#"
 #event TargetAEOn "#1# tells you#*#TargetAE on'"
 SUB Event_TargetAEOn(line, ChatSender)
   /if (${Debug} || ${Debug_Assists}) /echo |- Event_TargetAEOn ==>
@@ -1095,7 +1110,7 @@ SUB check_Burns
 |----------------------------------------------------|
 |- Engages EpicBurns 								                -|
 |----------------------------------------------------|
-#EVENT EpicBurn "<#1#> Epic Burn"
+#EVENT EpicBurn "<#1#> Epic Burn#2#"
 #EVENT EpicBurn "#1# tells you, 'Epic Burn'"
 #EVENT EpicBurn "#1# tells the group, 'Epic Burn'"
 #EVENT EpicBurn "#1# tell your party, 'Epic Burn'"
@@ -1123,7 +1138,7 @@ SUB event_EpicBurn(line, ChatSender)
 |----------------------------------------------------|
 |- Engages QuickBurns listed in the Character_Ini.	-|
 |----------------------------------------------------|
-#EVENT QuickBurn "<#1#> Quick Burn"
+#EVENT QuickBurn "<#1#> Quick Burn#2#"
 #EVENT QuickBurn "#1# tells you, 'Quick Burn'"
 #EVENT QuickBurn "#1# tells the group, 'Quick Burn'"
 #EVENT QuickBurn "#1# tell your party, 'Quick Burn'"
@@ -1156,7 +1171,7 @@ SUB event_QuickBurn(line, ChatSender)
 |----------------------------------------------------|
 |- Engages LongBurns listed in the Character_Ini.	-|
 |----------------------------------------------------|
-#EVENT LongBurn "<#1#> Long Burn"
+#EVENT LongBurn "<#1#> Long Burn#2#"
 #EVENT LongBurn "#1# tells you, 'Long Burn'"
 #EVENT LongBurn "#1# tells the group, 'Long Burn'"
 #EVENT LongBurn "#1# tell your party, 'Long Burn'"
@@ -1189,7 +1204,7 @@ SUB event_LongBurn(line, ChatSender)
 |----------------------------------------------------|
 |- Engages FullBurns listed in the Character_Ini.	-|
 |----------------------------------------------------|
-#EVENT FullBurn "<#1#> Full Burn"
+#EVENT FullBurn "<#1#> Full Burn#2#"
 #EVENT FullBurn "#1# tells you, 'Full Burn'"
 #EVENT FullBurn "#1# tells the group, 'Full Burn'"
 #EVENT FullBurn "#1# tell your party, 'Full Burn'"
@@ -1326,9 +1341,6 @@ sub event_CombatMode(line, ChatSender, parms)
     /swap ranged
     /delay 2
   }
-  /if ( ${argPart.Equal[off]}) {
-    /varset AssistType Off
-  }
   /if (${Debug} || ${Debug_Assists})  /echo |-- Leaving Combat Mode ---|
 /return
 
@@ -1365,6 +1377,7 @@ Sub assist_Setup
 | ------------------------------------- Import Character_Ini Settings.
 	/if (${Ini[${Character_Ini},Assist Settings,Assist Type (Melee/Ranged/Off)].Length})  /call IniToVar "${Character_Ini},Assist Settings,Assist Type (Melee/Ranged/Off)" AssistType string outer
   /if (${Ini[${Character_Ini},Assist Settings,Taunt(On/Off)].Length})          /call IniToVar "${Character_Ini},Assist Settings,Taunt(On/Off)" doTaunt bool outer
+  /if (${Ini[${Character_Ini},Assist Settings,SmartTaunt(On/Off)].Length})              /call IniToVar "${Character_Ini},Assist Settings,SmartTaunt(On/Off)" smartTaunt bool outer
 	/if (${Ini[${Character_Ini},Assist Settings,Melee Stick Point].Length})           /call IniToVar "${Character_Ini},Assist Settings,Melee Stick Point" AssistStickPoint string outer
 	/if (${Ini[${Character_Ini},Assist Settings,Melee Distance].Length})              /call IniToVar "${Character_Ini},Assist Settings,Melee Distance" AssistDistanceSetting string outer
 	/if (${Ini[${Character_Ini},Assist Settings,Ranged Distance].Length})             /call IniToVar "${Character_Ini},Assist Settings,Ranged Distance" RangedStickDistance string outer
@@ -1376,8 +1389,7 @@ Sub assist_Setup
 		/if (${Debug} || ${Debug_Assists}) /echo ERROR: @[EngagePct] - EngagePct is invalid, defaulting to 98%
 		/varset EngagePct 98
 	}
-	| [Melee Abilities].
-  /call #INItoArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
+
 
   | Epic Definitions for EpicBurn - warr, shd, pal,
   /if (${FindItemCount["Prismatic Dragon Blade"]})                /declare EpicName string outer "Prismatic Dragon Blade"
@@ -1386,7 +1398,7 @@ Sub assist_Setup
   |/if (${FindItemCount["Spiritcaller Totem of the Feral"]})       /declare EpicName string outer "Spiritcaller Totem of the Feral"
   /if (${FindItemCount["Raging Taelosian Alloy Axe"]})            /declare EpicName string outer "Raging Taelosian Alloy Axe"
   /if (${FindItemCount["Vengeful Taelosian Blood Axe"]})          /declare EpicName string outer "Vengeful Taelosian Blood Axe"
-  /if (${FindItemCount["Staff of Living Brambles"]})              /declare EpicName string outer "Staff of Living Brambles"
+  |/if (${FindItemCount["Staff of Living Brambles"]})              /declare EpicName string outer "Staff of Living Brambles"
   /if (${FindItemCount["Staff of Everliving Brambles"]})          /declare EpicName string outer "Staff of Everliving Brambles"
   /if (${FindItemCount["Fistwraps of Celestial Discipline"]})     /declare EpicName string outer "Fistwraps of Celestial Discipline"
   /if (${FindItemCount["Transcended Fistwraps of Immortality"]})  /declare EpicName string outer "Transcended Fistwraps of Immortality"
@@ -1421,6 +1433,9 @@ Sub assist_Setup
 |------------------------------------------------------------------------------------------------
 |------------------------------------------------------------------------------------------------
 SUB assist_SpellArrays
+| [Melee Abilities].
+  /call #INItoArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
+
 | [Nukes].
   /call #INItoArray "${Character_Ini},Nukes,${nukesToUse}#" MyNukes
   /call #INItoArray "${Character_Ini},DoTs,DoT on Assist#" Assist_DoTs
@@ -1449,6 +1464,7 @@ SUB assist_SpellArrays
     /if (${Bool[${Me.AltAbility[Celestial Hammer]}]})   /call BuildArray "swarmPets" "Celestial Hammer"
   }
 
+  /if (${MyAbilities.Size} > 0)		    /call BuildSpellArray "MyAbilities"	      "Abilities2D"
   /if (${MyNukes.Size} > 0)		        /call BuildSpellArray "MyNukes"	        "Nukes2D"
 
   /if (${PBAE_Spells.Size} > 0)		    /call BuildSpellArray "PBAE_Spells"	      "PBAE_Spells2D"
@@ -1517,6 +1533,7 @@ SUB assist_CharacterSettings
   /if (${Select[${Me.Class.ShortName},PAL,SHD,WAR]}) {
     /call WriteToIni "${Character_Ini},Assist Settings,Melee Stick Point" Front
     /call WriteToIni "${Character_Ini},Assist Settings,Taunt(On/Off)" Off
+    /call WriteToIni "${Character_Ini},Assist Settings,SmartTaunt(On/Off)" On
   } else {
     /call WriteToIni "${Character_Ini},Assist Settings,Melee Stick Point" Behind
   }

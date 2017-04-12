@@ -159,12 +159,16 @@ Sub #GetItemLink(FromName, destVar)
 /return ${tempLink}
 
 Sub #UnlinkAllItems(input, destVar)
+|/bc Unlink: ${input}
   /call #CreateVars string outer ItemNameReturn
   /varset ${destVar}
   /declare i int local 0
   /for i 1 to ${Math.Calc[${input.Count[|]}+1]}
     /call #StripItemLink "${input.Arg[${i},|]}" ItemNameReturn
+    /if (${ItemNameReturn.NotEqual[NULL]}) {
+|/bc ItemNameReturn: ${ItemNameReturn}
     /varset ${destVar} ${${destVar}}${If[${i}>1,|,]}${ItemNameReturn}
+    }
   /next i
 /return
 
@@ -378,7 +382,7 @@ Sub #IsItemLink(input, destVar)
 
 Sub #StripItemLink(input, destVar)
   /if (${input.Find[]}) {
-    /varset ${destVar} ${input.Right[-51].Left[-1]}
+    /varset ${destVar} ${input.Right[-57].Left[-1]}
   } else {
     /varset ${destVar} ${input}
   }

@@ -311,7 +311,7 @@ Sub e3_Cast(int targetID, ArrayName, int ArrayIndex)
   |/if (${returnTwist})	/call unpauseTwist
 	
 	/if (${Debug} || ${Debug_Casting})  /echo |- e3_Cast -| castReturn= ${Cast.Result} ${castReturn}
-	|/varset Debug_Casting FALSE
+/varset Debug_Casting FALSE
 /return
 
 |------------------------------------------------|
@@ -341,15 +341,16 @@ Sub memorize_spell(spellName,gemNum)
   /declare secWaited int local 0
   /memorize "${spellName}" ${gemNum}
   /delay 5s ${Bool[${Me.Gem[${spellName}]}]}
+  |do not wait for detrimental spells
+  /if (${Spell[${spellName}].Beneficial}) {
   /if (${Me.CombatState.NotEqual[COMBAT]}) {
-    :checkMem
-      /delay 2s ${Me.SpellReady[${spellName}]}
-      /varcalc secWaited ${secWaited}+1
-      /call Background_Events
-      /if (${secWaited} < 5) /goto :checkMem
+  	|not in combat delay 3seconds+ recast time until spell is ready
+    /delay ${Math.Calc[3+${Spell[${spellName}].RecastTime}/1000]}s ${Me.SpellReady[${spellName}]}
   } else {
-    /delay 2s ${Me.SpellReady[${spellName}]}
+    | if im in combat, only delay if the spell recast time is 3 or fewer seconds
+    /if (${Math.Calc[${Spell[${spellName}].RecastTime}/1000]} <=3) /delay 3s ${Me.SpellReady[${spellName}]}
   }
+	}
 /RETURN
 |------------------------------------------------|
 |- concept from KA                        	    -|
@@ -458,7 +459,6 @@ Sub casting_Setup
 
 #event NoHold "You can't levitate in this zone."
 Sub Event_NoHold
-	/echo Event_NoHold
 	/if (${Defined[noHold]}) /varset noHold TRUE
 /return
 
