@@ -265,3 +265,6 @@ Sub OffTanking_Background_Events
   /doevent ToggleOfftank
 /return
 
+Sub OffTanking_Setup
+
+/return

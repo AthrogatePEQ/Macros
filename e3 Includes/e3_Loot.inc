@@ -408,6 +408,7 @@ SUB loot_Setup
 	/if (!${Ini[${Loot_Ini}].Length}) /call Build_Alphabetized_Ini "${Loot_Ini}"
 	/call IniToVar "${genSettings_Ini},Loot,Loot Link Channel" linkChannel string outer
 	/call IniToVar "${genSettings_Ini},Loot,Corpse Seek Radius" seek_Radius int outer
+  /call IniToVar "${genSettings_Ini},Loot,Loot in Combat" combatLooting bool outer
 	| Import character settings
 	/if (${Bool[${Ini[${Character_Ini},Misc,Auto-Loot (On/Off)]}]}) /call IniToVar "${Character_Ini},Misc,Auto-Loot (On/Off)" Auto_Loot bool outer
 /if (${Debug} || ${Debug_Loot}) /echo <== _Setup -|
@@ -420,6 +421,7 @@ SUB loot_MacroSettings
 	/call WriteToIni "${genSettings_Ini},Loot,Auto-Loot Mode (Auto/Manual)" Auto
 	/call WriteToIni "${genSettings_Ini},Loot,Loot Link Channel" say
 	/call WriteToIni "${genSettings_Ini},Loot,Corpse Seek Radius" 125
+  /call WriteToIni "${genSettings_Ini},Loot,Loot in Combat" TRUE
 /if (${Debug} || ${Debug_Loot}) /echo <== _MacroSettings -|
 /RETURN
 

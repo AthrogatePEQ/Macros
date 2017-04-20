@@ -435,6 +435,18 @@ sub athlib_cure_spell(cureTarget, cureSpell)
 
 /return TRUE
 
+#EVENT HealAt "<#1#> HealAt #2# #3#"
+Sub event_HealAt(line, ChatSender, var1, var2)
+	/call verifyEvent "${ChatSender}" "${line}"
+	|    |-----------Valid User----------|    |-----------In Zone-------------|    |------------In Range------------|
+	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
+		/if (${Defined[${var1}]}) {
+			/bc Setting ${var1} to heal at ${var2}
+			/varset ${var1}[1,18] ${var2}
+		}
+	}
+/return
+
 Sub athlib_Setup
 	/tgb on
 	/call BlockBuffsAtStartup
@@ -477,4 +489,5 @@ Sub athlib_Background_Events
 	/doevents WhoNeedsTwo
 	/doevents report_aas
 	/doevents MyCure
+	/doevents HealAt
 /return

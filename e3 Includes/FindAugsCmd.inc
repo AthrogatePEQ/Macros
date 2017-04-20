@@ -21,12 +21,14 @@
 
 #Event FindAugsCmd "<#1#> FindAugs#2#"
 Sub Event_FindAugsCmd(line, ChatSender, eventParams)
+
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
+	/if (${Debug}) /bc ChatSender: ${ChatSender} User: ${Bool[${Macro.Return.Arg[2,_]}]} Zone: ${Bool[${Macro.Return.Arg[4,_]}]} In Range: ${Bool[${Macro.Return.Arg[5,_]}]}
 	/varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-  		/if (!${Defined[facReturn]}) /declare facReturn string outer
+  	/if (!${Defined[facReturn]}) /declare facReturn string outer
 		/call ForEachAug DisplayIfWhiteListed
 	} else {
 	}
@@ -66,12 +68,14 @@ Sub ForEachAug(callback)
   /next index
 /return
 
-Sub DisplayIfWhiteListed(itemName) 
+Sub DisplayIfWhiteListed(itemName)
+  /if (!${Defined[facReturn]}) /declare facReturn string outer
   /call FAC_IsWhiteListed "${itemName}" facReturn
   /if (${facReturn}) /bc Found Aug: ${itemName}
 /return
 
 Sub DisplayIfUnlisted(itemName)
+  /if (!${Defined[facReturn]}) /declare facReturn string outer
   /call FAC_IsWhiteListed "${itemName}" facReturn
   /if (!${facReturn}) {
     /call FAC_IsBlackListed "${itemName}" facReturn
@@ -94,6 +98,7 @@ Sub Event_WhiteListAug(line, args)
     /varset args ${args.Right[-51].Left[-1]}
   }
   /ini "${augfinder_ini}" "Whitelist" "${args.Replace[ ,_].Replace[',].Replace[`,]}" "1"
+  /if (!${Defined[facReturn]}) /declare facReturn string outer
   /call FAC_IsBlackListed "${args}" facReturn
   /if (${facReturn}) {
     /ini "${augfinder_ini}" "Blacklist" "${args.Replace[ ,_].Replace[',].Replace[`,]}" "0"
@@ -106,6 +111,8 @@ Sub Event_BlackListAug(line, args)
     /varset args ${args.Right[-51].Left[-1]}
   }
   /ini "${augfinder_ini}" "Blacklist" "${args.Replace[ ,_].Replace[',].Replace[`,]}" "1"
+  /if (!${Defined[facReturn]}) /declare facReturn string outer
+  /if (!${Defined[facReturn]}) /declare facReturn string outer
   /call FAC_IsWhiteListed "${args}" facReturn
   /if (${facReturn}) {
     /ini "${augfinder_ini}" "Whitelist" "${args.Replace[ ,_].Replace[',].Replace[`,]}" "0"
@@ -202,6 +209,7 @@ Sub Event_FindAugedCmd(line, ChatSender, eventParams)
 
 Sub FindAugsCMD_Background_Events
   /doevents FindAugedCmd
+  /doevents FindAugsCmd
   /doevents FindOtherAugsCmd
   /doevents WhiteListAug
   /doevents BlackListAug
@@ -211,11 +219,12 @@ Sub FindAugsCMD_Aliases
   /alias /whitelistaug /echo WhiteList Aug
   /alias /blacklistaug /echo BlackList Aug
   /alias /findaugs /bc FindAugs
+  /alias /findauged /bc FindAuged
   /alias /findotheraugs /bc FindOtherAugs
 /return
 
 Sub FindAugsCMD_Setup
-  /declare augfinder_ini e3 Macro Inis\findaugscmd.ini
+  /declare augfinder_ini string outer e3 Macro Inis\findaugscmd.ini
 /return
 
 Sub FindAugsCMD_CharacterSettings

@@ -1336,9 +1336,8 @@ SUB EVENT_Evacuate(line, ChatSender)
 	| -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
 	/if (${Defined[ChatSender]}) /if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-	|    |-----------Valid User----------|    |--------Included Bot-----------|
-	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]}) {
-
+  |    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|
+  /if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]}) {
 		| -Attempt to evac.
 		/if (${Me.AltAbilityReady[Exodus]}) {
 			/docommand ${ChatToggle} Evacuating!
@@ -1611,7 +1610,7 @@ SUB EVENT_listGroups
 #EVENT groupUp "<#1#> Group #2#"
 SUB EVENT_groupUp(line, ChatSender, eventParams)
 /if (${Debug}) /echo |- EVENT_groupUp ==>
-
+|/varset Debug true
 | -Verify the event
 	/call verifyEvent "${ChatSender}" "${line}"
   /varset ChatSender ${Macro.Return.Arg[1,_]}
@@ -1669,6 +1668,7 @@ SUB EVENT_groupUp(line, ChatSender, eventParams)
 	}
   :skip
 :skip
+|/varset Debug false
 /if (${Debug}) /echo <== EVENT_groupUp -|
 /RETURN
 
@@ -1754,6 +1754,7 @@ SUB EVENT_exp_group(line,ChatSender, expToggle)
     |enable KoS mode
     /if (${Select[${expToggle},On,Yes,True,1]} > 0) {
       /call #INItoArray "${Character_Ini},Melee Abilities,Ability#" MyAbilities
+			/if (${MyAbilities.Size} > 0)	/call BuildSpellArray "MyAbilities" "Abilities2D"
       /if (${Me.Class.ShortName.Equal[Rog]}) {
       	/call buff_SpellArrays
 				/varset strikeDisc ${strikeDiscStr.Arg[1,/]}
@@ -1764,7 +1765,10 @@ SUB EVENT_exp_group(line,ChatSender, expToggle)
 
 		|remove anything that could kos when out of group
     } else /if (${Select[${expToggle},Off,No,False,0]} > 0) {
-      /if (${Select[${Me.Class.ShortName},${Ini[${genSettings_Ini},ExpGroup,NoCombatAbil]}]} && ${Defined[MyAbilities]}) /deletevar MyAbilities
+      /if (${Select[${Me.Class.ShortName},${Ini[${genSettings_Ini},ExpGroup,NoCombatAbil]}]}) {
+        /if (${Defined[MyAbilities]}) /deletevar MyAbilities
+        /if (${Defined[Abilities2D]}) /deletevar Abilities2D
+      }
       /if (${Ini[${Character_Ini},Nukes,${NoKSNukeSet}].Length}) /call event_NukeSet "PLACEHOLDER" "${Me}" ${NoKSNukeSet}
 			/if (${Defined[NoKSWeaponSet]} && ${Ini[${Character_Ini},Swap Items,${NoKSWeaponSet}].Length}) /swap ${NoKSWeaponSet}
       /if (${Me.Class.ShortName.Equal[Rog]}) {

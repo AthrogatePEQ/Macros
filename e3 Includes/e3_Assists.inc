@@ -593,7 +593,7 @@ SUB cast_longTermSpells(int spellTarget, string ArrayName)
         /call TrueTarget ${spellTarget}
         /delay 1
       }
-      |/echo ${Target.Name} ${Bool[${Select[${ArrayName},Command_Debuffs2D,Assist_Debuffs2D]}]} dru ${Target.BuffDuration[${${ArrayName}[${i},${iSpellName}]}]}
+      /echo ${Target.Name} ${Bool[${Select[${ArrayName},Command_Debuffs2D,Assist_Debuffs2D]}]} dru ${Target.BuffDuration[${${ArrayName}[${i},${iSpellName}]}]}
       /if (!${Bool[${${spellTimer}}]} && ${Bool[${Select[${ArrayName},Command_Debuffs2D,Assist_Debuffs2D]}]} && ${Target.BuffDuration[${${ArrayName}[${i},${iSpellName}]}]}/1000 > ${longTermRecastTime}) {
         /varcalc spellRecast ${Target.BuffDuration[${${ArrayName}[${i},${iSpellName}]}]}/1000 - ${longTermRecastTime}
         /call createTimer "${spellTimer}" "${spellRecast}s"
@@ -614,9 +614,9 @@ SUB cast_longTermSpells(int spellTarget, string ArrayName)
         } else /goto :skipCast
       } else /goto :skipCast
 
-      |/echo retu ${castReturn}  res ${Cast.Result}
-      |/echo maxtries ${${ArrayName}[${i},${iMaxTries}]} rescount ${resistCount} ${${resistCount}}
-      |/echo castname ${${ArrayName}[${i},${iCastName}]} stored ${Cast.Stored.Name} return  ${castReturn}
+      /echo retu ${castReturn}  res ${Cast.Result}
+      /echo maxtries ${${ArrayName}[${i},${iMaxTries}]} rescount ${resistCount} ${${resistCount}}
+      /echo castname ${${ArrayName}[${i},${iCastName}]} stored ${Cast.Stored.Name} return  ${castReturn}
       | If the spell was resisted.
       /if (${Cast.Stored.Name.Equal[${${ArrayName}[${i},${iSpellName}]}]} && ${castReturn.Equal[CAST_RESIST]}) {
         /if (!${Defined[${resistCount}]}) {
@@ -1398,7 +1398,7 @@ Sub assist_Setup
   |/if (${FindItemCount["Spiritcaller Totem of the Feral"]})       /declare EpicName string outer "Spiritcaller Totem of the Feral"
   /if (${FindItemCount["Raging Taelosian Alloy Axe"]})            /declare EpicName string outer "Raging Taelosian Alloy Axe"
   /if (${FindItemCount["Vengeful Taelosian Blood Axe"]})          /declare EpicName string outer "Vengeful Taelosian Blood Axe"
-  |/if (${FindItemCount["Staff of Living Brambles"]})              /declare EpicName string outer "Staff of Living Brambles"
+  /if (${FindItemCount["Staff of Living Brambles"]})              /declare EpicName string outer "Staff of Living Brambles"
   /if (${FindItemCount["Staff of Everliving Brambles"]})          /declare EpicName string outer "Staff of Everliving Brambles"
   /if (${FindItemCount["Fistwraps of Celestial Discipline"]})     /declare EpicName string outer "Fistwraps of Celestial Discipline"
   /if (${FindItemCount["Transcended Fistwraps of Immortality"]})  /declare EpicName string outer "Transcended Fistwraps of Immortality"

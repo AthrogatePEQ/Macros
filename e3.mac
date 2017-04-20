@@ -11,6 +11,11 @@
 #include e3 Includes\e3_Setup.inc
 
 SUB Main(modeSelect)
+  /declare Debug bool outer false
+	/if (${Debug}) {
+		/echo Enter Main
+		/delay 5
+	}
   /declare macroVersion string outer 6.0
   /declare IniMode string outer
   /call #RequirePlugin MQ2IniExt
@@ -20,8 +25,15 @@ SUB Main(modeSelect)
   } else {
     /varset IniMode Ini
   }
+	/if (${Debug}) {
+		/echo Pre Setup
+		/delay 5
+	}
   /call e3_Setup "${modeSelect}"
-
+	/if (${Debug}) {
+		/echo Post Setup
+		/delay 5
+	}
   /declare i int local
 :MainLoop
 /if (${Debug}) /echo |- MainLoop ==>
@@ -37,7 +49,7 @@ SUB Main(modeSelect)
 		/call check_Active
 		/call check_Idle
 
-		/if (${lifeSupport2D.Size[1]} && ${Me.PctHPs} <=80) /call check_lifeSupport
+		/if (${lifeSupport2D.Size[1]} && ${Me.PctHPs} < 99) /call check_lifeSupport
     |workaround for item cast array
     /if (${reloadOnLoot}) /call reloadSpellArrays
 
@@ -57,8 +69,14 @@ SUB Main(modeSelect)
 			/if (${medBreak}) /call check_MedBreak
 			| Maintain macro timers
 			/if (${timerArray.Size}) /call check_macroTimers
+			|prevent breakongm from disabling moveutils
+			|/squelch /stick imsafe
 		}
 |/echo main ${Time}
+  /if (${MoveUtils.GM}) {
+    /stick imsafe
+    /echo GM Safe kicked in, issued /stick imsafe.  you may need to reissue /followme or /assiston
+  }
 /if (${Debug}) {
 	/echo <== MainLoop -|
 	/delay 5
