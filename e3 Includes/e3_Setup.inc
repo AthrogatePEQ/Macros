@@ -60,6 +60,7 @@
 #include e3 Includes\HandItemCmd.inc
 #include e3 Includes\e3_Cures2.inc
 #include e3 Includes\FindAugsCmd.inc
+#include e3 Includes\e3_AugReport.inc
 |#include e3 Includes\e3_FocusFinder.inc
 
 SUB e3_Setup(modeSelect)

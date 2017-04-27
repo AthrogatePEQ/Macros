@@ -8,10 +8,10 @@
 
 sub BlockBuffsAtStartup
 
-  /declare classesMelee string local BRD,BER,MNK,ROG,WAR,BRD
+  /declare classesMelee string local BRD,BER,MNK,ROG,WAR
   /declare classesCaster string local WIZ,MAG,NEC,ENC
   /declare classesPriest string local CLR,DRU,SHM
-  /declare classesHybrid string local PAL,SHD,BST
+  /declare classesHybrid string local PAL,SHD,BST,RNG
 
   /call BlockBuffSettingReader
 
@@ -30,7 +30,7 @@ sub BlockBuffsAtStartup
   /squelch /blockspell clear me
   /declare i int local 0
   /for i 1 to ${myBlockedBuffs.Size}
-    |/echo ${myBlockedBuffs[${i}]}: ${Spell[${myBlockedBuffs[${i}]}].ID}
+    /if (${Debug}) /echo ${myBlockedBuffs[${i}]}: ${Spell[${myBlockedBuffs[${i}]}].ID}
     /squelch /blockspell add me ${Spell[${myBlockedBuffs[${i}]}].ID}
   /next i
 /return

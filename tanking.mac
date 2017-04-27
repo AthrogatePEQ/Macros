@@ -43,9 +43,12 @@
 #include e3 Includes\e3_SmoothMoves.inc
 #include e3 Includes\e3_Casting.inc
 #include e3 Includes\e3_Assists.inc
+#include e3 Includes\e3_Wait4Rez.inc
 #include e3 Includes\e3_AutoExpAdjust.inc
 #include e3 Includes\e3_BlockBuffs.inc
 #include e3 Includes\HandItemCMD.inc
+#include e3 Includes\AugReport.inc
+#include e3 Includes\FindAugsCMD.inc
 
 #event AssistStart "<#1#> Assist on #2#"
 #event RotateExpGroup1 "[MQ2] RotateExpGroup"

@@ -55,6 +55,7 @@ Sub LootItemCMD_Aliases
   /noparse /alias /lootitem /bc LootItem ${Target.ID}
   /alias /stoploot /bc StopLoot
   /alias /equipthat /bc EquipThat
+  /alias /li /bc LootItem
 /return
 
 Sub LootItemCMD_Setup

@@ -178,6 +178,7 @@ SUB AggroAbilities
 		/declare minEnd int local
 		/declare j int local
     :DoAggroAbilities
+    /doevents Backoff
 		| For 1 to the size of MyAbilities array, use each ability.
 		/for j 1 to ${TankingAbilities.Size}
 		  /if (${Debug} || ${Debug_OffTank}) /echo offtank Checking "${TankingAbilities[${j}]}"

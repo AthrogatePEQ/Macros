@@ -1246,8 +1246,7 @@ SUB useBurns(ArrayName)
     /if (${Macro.Return}) {
       /if (${Me.ActiveDisc.ID} && ${${ArrayName}[${i},${iCastName}].Equal[Savage Spirit]}) /goto :skipCurrent
       /if (${Me.ActiveDisc.ID} && ${${ArrayName}[${i},${iCastType}].Equal[Disc]} && ${Bool[${${ArrayName}[${i},${iDuration}]}]}) /goto :skipCurrent
-
-        /g useBurns ${Time} : ${ArrayName}-${${ArrayName}[${i},${iCastName}]}
+        |/g useBurns ${Time} : ${ArrayName}-${${ArrayName}[${i},${iCastName}]}
         /call e3_Cast ${AssistTarget} "${ArrayName}" "${i}"
     } else {
       /if (${Debug} || ${Debug_Assists}) /echo NotReady: ${i} ${${ArrayName}[${i},${iCastName}]}
