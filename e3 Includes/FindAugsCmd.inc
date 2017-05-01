@@ -95,7 +95,7 @@ Sub FAC_IsBlackListed(itemName, destVar)
 
 Sub Event_WhiteListAug(line, args)
   /if (${args.Find[]}) {
-    /varset args ${args.Right[-51].Left[-1]}
+    /varset args ${args.Right[-57].Left[-1]}
   }
   /ini "${augfinder_ini}" "Whitelist" "${args.Replace[ ,_].Replace[',].Replace[`,]}" "1"
   /if (!${Defined[facReturn]}) /declare facReturn string outer
@@ -108,7 +108,7 @@ Sub Event_WhiteListAug(line, args)
 
 Sub Event_BlackListAug(line, args)
   /if (${args.Find[]}) {
-    /varset args ${args.Right[-51].Left[-1]}
+    /varset args ${args.Right[-57].Left[-1]}
   }
   /ini "${augfinder_ini}" "Blacklist" "${args.Replace[ ,_].Replace[',].Replace[`,]}" "1"
   /if (!${Defined[facReturn]}) /declare facReturn string outer
