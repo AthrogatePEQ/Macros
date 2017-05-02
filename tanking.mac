@@ -47,8 +47,9 @@
 #include e3 Includes\e3_AutoExpAdjust.inc
 #include e3 Includes\e3_BlockBuffs.inc
 #include e3 Includes\HandItemCMD.inc
-#include e3 Includes\AugReport.inc
+#include e3 Includes\e3_AugReport.inc
 #include e3 Includes\FindAugsCMD.inc
+#include e3 Includes\e3_Alerts.inc
 
 #event AssistStart "<#1#> Assist on #2#"
 #event RotateExpGroup1 "[MQ2] RotateExpGroup"
@@ -93,6 +94,7 @@ Sub Main
   /call Basics_Setup
   /call SmoothMoves_Setup
   /call BlockBuffsAtStartup
+  /call FindAugsCMD_Setup
   
   /declare killingStuff int outer 0
   /declare checkSpawn spawn outer
