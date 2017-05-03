@@ -2,6 +2,27 @@
 |- e3_Classes_Necromancer.inc v4.0 ( originally designed to work with e3.mac )	-|
 |- Written by Killians of PEQ													-|
 |--------------------------------------------------------------------------------|
+#Event ToggleManaDump "<#1#> Mana Dump #2#"
+#Event ToggleManaDump "#1# tells you, 'Mana Dump #2#'"
+SUB Event_ToggleManaDump(line, ChatSender, buffSetting)
+/if (${Debug}) /echo offtank |- ToggleManaDump ==>
+
+	/if (! ${Defined[manaDump]} ) /declare manaDump boolean local FALSE
+
+	/declare mystring string local ${buffSetting.Arg[1, ]}
+	/call #verifyEvent "${ChatSender}" "${line}"
+	/if (!${Macro.Return}) /return
+
+	/if (${mystring.Equal[on]}) {
+		/varset manaDump TRUE
+	} else /if (${mystring.Equal[off]}) {
+		/varset manaDump FALSE
+	}
+
+	/docommand ${ChatToggle} Auto Mana Dump [${If[${manaDump},ON,OFF]}]
+
+/if (${Debug}) /echo offtank <== ToggleManaDump -|
+/RETURN
 
 SUB check_Lich
 /if (${Debug}) /echo |- check_castLich ==>
@@ -13,7 +34,7 @@ SUB check_Lich
 
 SUB check_manaDump
 /if (${Debug}) /echo |- check_manaDump ==>
-	/if (${manaDump} && !${medBreak}) {
+	/if (${manaDump} && !${medBreak} && ${BuffCheck} && ${UserBuffCheck} ) {
 		/declare manaDump_Target string local
 		/declare manaDumpSpellIndex int local 0
     /declare i int local
@@ -72,11 +93,11 @@ SUB NEC_MacroSettings
 SUB NEC_CharacterSettings
 /if (${Debug}) /echo |- NEC_CharacterSettings ==>
 	/call WriteToIni "${Character_Ini},${Me.Class},Lich Spell"
-	/call WriteToIni "${Character_Ini},${Me.Class},LifeTap#1"
+	/call WriteToIni "${Character_Ini},${Me.Class},LifeTap"
 	/call WriteToIni "${Character_Ini},${Me.Class},Mana Dump (On/Off)"
   |/call WriteToIni "${Character_Ini},${Me.Class},Mana Dump Engage Pct" 70
-	/call WriteToIni "${Character_Ini},${Me.Class},Who to Mana Dump#1"
-	/call WriteToIni "${Character_Ini},${Me.Class},Mana Dump#1"
+	/call WriteToIni "${Character_Ini},${Me.Class},Who to Mana Dump"
+	/call WriteToIni "${Character_Ini},${Me.Class},Mana Dump"
 /if (${Debug}) /echo <== NEC_CharacterSettings -|
 /RETURN
 
@@ -87,4 +108,5 @@ Sub NEC_Aliases
 /return
 
 Sub NEC_Background_Events
+	/doevent ToggleManaDump
 /return
