@@ -677,8 +677,8 @@ SUB EVENT_dropBuff(line, ChatSender, buffName)
       }
       /next i
     } else {
-    /removebuff ${buffName}
-  }
+			/removebuff ${buffName}
+		}
   }
   /if (${Debug} || ${Debug_Basics}) /echo <== EVENT_dropInvis -|
 /RETURN

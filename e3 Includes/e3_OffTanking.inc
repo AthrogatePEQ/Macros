@@ -89,7 +89,7 @@ Sub OfftankAction
   /varset npc 0
   /varset i 0
   :GetNextNPC
-  /doevents BackOff
+  /doevent OffTanking_Background_Events
 
   /varcalc i ${i}+1
   /varset npc ${NearestSpawn[${i},npc radius 50 zradius 25 los noalert ${AlertList}].ID}
@@ -104,6 +104,7 @@ Sub OfftankAction
     /varset inrange 0
     /varset p 0
     :GetNextPC
+    /doevent OffTanking_Background_Events
     /varcalc p ${p}+1
     /varset pc ${Spawn[${npc}].NearestSpawn[${p}, pc radius ${range} zradius 25].ID}
 
@@ -178,7 +179,7 @@ SUB AggroAbilities
 		/declare minEnd int local
 		/declare j int local
     :DoAggroAbilities
-    /doevents Backoff
+    /doevent OffTanking_Background_Events
 		| For 1 to the size of MyAbilities array, use each ability.
 		/for j 1 to ${TankingAbilities.Size}
 		  /if (${Debug} || ${Debug_OffTank}) /echo offtank Checking "${TankingAbilities[${j}]}"
@@ -264,6 +265,7 @@ Sub OffTanking_MacroSettings
 
 Sub OffTanking_Background_Events
   /doevent ToggleOfftank
+  /doevent Backoff
 /return
 
 Sub OffTanking_Setup

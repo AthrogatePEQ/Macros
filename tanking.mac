@@ -357,7 +357,7 @@ Sub LoadExpRot
 /return
 
 
-#event BuffAll "<#*#>#*#Buff All"
+#event BuffAll "<#*#> Buff All"
 Sub Event_BuffAll(line)
   /bc Buff me
 /return
