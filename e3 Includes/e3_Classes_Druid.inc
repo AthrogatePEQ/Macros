@@ -28,6 +28,7 @@ Sub DRU_Aliases
 
 #event AE_SOW "#*# tells you, 'AESOW'"
 sub Event_AE_SOW(string line)
+	/if (${Me.Class.ShortName.Equal[DRU]}) {
  /if (${Me.AltAbilityReady[Mass Group Buff]} && ${Me.AltAbilityReady[Spirit of the Wood]}) {
 		/bc MGB Spirit of the Wood inc...
 		/casting "Mass Group Buff|alt" "-maxtries|3"
@@ -40,6 +41,7 @@ sub Event_AE_SOW(string line)
  } else /if (!${Me.AltAbilityReady[Mass Group Buff]}) {
 		/bc Mass Group Buff is not available...
  } else /bc Spirit of the Wood is not available...
+	}
 /return
 
 Sub DRU_Background_Events
