@@ -66,9 +66,13 @@ Sub GetAugDetails(ItemRef, LocRef)
       /if (${RelevantAugTypes.Find[|${AugType}|]}) {
         /if (${Bool[${${AugRef}}]}) {
             /varset hp_mana ${${AugRef}.HP}:${${AugRef}.Mana}
-            /varset ret ${ret}${hp_mana}:${PadR[${LocRef}:,12, ]}
-            /varset ret ${ret} H: ${PadL[${${AugRef}.HP},3, ]}
-            /varset ret ${ret} M: ${PadL[${${AugRef}.Mana},3, ]}
+            |/varset ret ${ret}${hp_mana}:${PadR[${LocRef}:,12, ]}
+            |/varset ret ${ret} H: ${PadL[${${AugRef}.HP},3, ]}
+            |/varset ret ${ret} M: ${PadL[${${AugRef}.Mana},3, ]}
+            /varset ret ${ret}${hp_mana}:${LocRef}:
+            /varset ret ${ret} H: ${${AugRef}.HP}
+            /varset ret ${ret} M: ${${AugRef}.Mana}
+
             /if (${DisplayAugType}) /varset ret ${ret} Type: ${AugType}
             /for j 1 to ${StatCount}
               /varset StatName ${RelevantStats.Arg[${j},|].Arg[1,~]}
@@ -87,7 +91,8 @@ Sub GetAugDetails(ItemRef, LocRef)
             |}
             /varset ret ${ret}|
         } else {
-          /varset ret ${ret}0:0:${PadR[${LocRef}:,12, ]} ${PadR[EMPTY,13, ]} Type: ${AugType}|
+          |/varset ret ${ret}0:0:${PadR[${LocRef}:,12, ]} ${PadR[EMPTY,13, ]} Type: ${AugType}|
+          /varset ret ${ret}0:0:${LocRef} EMPTY Type: ${AugType}|
         }
       }
     /next i

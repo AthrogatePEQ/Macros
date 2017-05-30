@@ -50,6 +50,7 @@
 #include e3 Includes\e3_AugReport.inc
 #include e3 Includes\FindAugsCMD.inc
 #include e3 Includes\e3_Alerts.inc
+#include e3 Includes\e3_FocusFinder.inc
 
 #event AssistStart "<#1#> Assist on #2#"
 #event RotateExpGroup1 "[MQ2] RotateExpGroup"
@@ -95,6 +96,7 @@ Sub Main
   /call SmoothMoves_Setup
   /call BlockBuffsAtStartup
   /call FindAugsCMD_Setup
+  /call FocusFinder_Setup
   
   /declare killingStuff int outer 0
   /declare checkSpawn spawn outer

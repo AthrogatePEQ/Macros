@@ -277,6 +277,15 @@ SUB EVENT_bark(line, ChatSender, msgTarget, barkMsg)
 		/declare retryTimer timer local 35s
 		/declare startingLoc string local
 		
+		|/if (!${Spawn[id ${msgTarget}].LineOfSight}) {
+		|	/echo |- EVENT_Bark -| Failed - ${Spawn[id ${msgTarget}].CleanName} not in Line of Sight
+		|	/return
+		|}
+		/if (${Spawn[id ${msgTarget}].Distance3D}>150) {
+			/echo |- EVENT_Bark -| Failed - ${Spawn[id ${msgTarget}].CleanName} is > 150 distance
+			/return
+		}
+		
 		/if (${Stick.Active}) /squelch /stick off
 		/if (${NetAdvPath.Status}==1) /squelch /netfollow off
 		/if (${Me.Casting.ID} && ${Me.Class.ShortName.NotEqual[BRD]}) /call interrupt
