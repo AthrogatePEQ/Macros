@@ -27,8 +27,12 @@ Sub Event_AugReport(line, chatSender, args)
     }
   /next i
 
-  /call #QuickSort AR:AugArray 1 ${AugCount} .Arg[2,:]
-  /call #QuickSort AR:AugArray 1 ${AugCount} .Arg[1,:]
+  |/call #QuickSort AR:AugArray 1 ${AugCount} .Arg[2,:]
+  |/call #QuickSort AR:AugArray 1 ${AugCount} .Arg[1,:]
+
+  /mergesort AR:AugArray "${Math.Calc[${%%.Arg[1,:]} * 1000].Int}"
+  |/call #PrintArray AR:AugArray
+  |/return
 
   /declare AugData string local
   /varcalc i ${AugCount}
@@ -45,11 +49,11 @@ Sub Event_AugReport(line, chatSender, args)
 
 Sub GetAugDetails(ItemRef, LocRef)
   /declare DisplayAugType bool local true
-  /declare DisplayEffects bool local false
+  /declare DisplayEffects bool local true
   /declare i int local
   /declare j int local
   /declare ret string local
-  /declare hp_mana string local
+  /declare hp_mana int local
   /declare RelevantStats string local AC~AC|Avoidance~Avoid|Shielding~Shielding|Accuracy~Acc|CombatEffects~Combat|Attack~Atk|Haste~Haste|
   /declare RelevantAugTypes string local |7|8|
   /declare StatCount int local ${RelevantStats.Count[|]}
@@ -65,11 +69,13 @@ Sub GetAugDetails(ItemRef, LocRef)
       /varcalc AugType ${${ItemRef}.AugSlot${i}}
       /if (${RelevantAugTypes.Find[|${AugType}|]}) {
         /if (${Bool[${${AugRef}}]}) {
-            /varset hp_mana ${${AugRef}.HP}:${${AugRef}.Mana}
+            |/varset hp_mana ${${AugRef}.HP}:${${AugRef}.Mana}
+            /varset hp_mana ${Int[ ${Math.Calc[${${AugRef}.HP} + ${${AugRef}.Mana} ]} ]}
+            /varset hp_mana ${Int[ ${Math.Calc[ ${hp_mana} + ${${AugRef}.AC} ]} ]}
             |/varset ret ${ret}${hp_mana}:${PadR[${LocRef}:,12, ]}
             |/varset ret ${ret} H: ${PadL[${${AugRef}.HP},3, ]}
             |/varset ret ${ret} M: ${PadL[${${AugRef}.Mana},3, ]}
-            /varset ret ${ret}${hp_mana}:${LocRef}:
+            /varset ret ${ret}${hp_mana}:0:${LocRef}:
             /varset ret ${ret} H: ${${AugRef}.HP}
             /varset ret ${ret} M: ${${AugRef}.Mana}
 
@@ -81,14 +87,14 @@ Sub GetAugDetails(ItemRef, LocRef)
                 /varset ret ${ret} ${StatAlias}: ${${AugRef}.${StatName}}
               }
             /next j
-            |/if (${DisplayEffects}) {
-            |  /if (${${AugRef}.EffectCount}) {
-            |    /varset ret ${ret} Effects:
-            |    /for j 1 to ${${AugRef}.EffectCount}
-            |      /varset ret ${ret} [${${AugRef}.Effects[${j}].Name}]
-            |    /next j
-            |  }
-            |}
+            /if (${DisplayEffects}) {
+              /if (${${AugRef}.EffectCount}) {
+                /varset ret ${ret} Effects:
+                /for j 1 to ${${AugRef}.EffectCount}
+                  /varset ret ${ret} [${${AugRef}.Effects[${j}].Name}]
+                /next j
+              }
+            }
             /varset ret ${ret}|
         } else {
           |/varset ret ${ret}0:0:${PadR[${LocRef}:,12, ]} ${PadR[EMPTY,13, ]} Type: ${AugType}|

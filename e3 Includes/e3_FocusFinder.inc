@@ -149,6 +149,7 @@ Sub FindFocusOfType(ItemEffects, typeToFind, spellAffinity, destVar)
   /declare highestFoundID int local 0
   /declare highestFoundValue int local 0
   /declare locationOfHighest string local
+|/bc max: ${Math.Calc[${ItemEffects.Count[|]}+1]}
   /for i 1 to ${Math.Calc[${ItemEffects.Count[|]}+1]}
     /varset currentID ${ItemEffects.Arg[${i},|].Arg[1,@]}
     /varset currentLoc ${ItemEffects.Arg[${i},|].Arg[2,@]}
@@ -159,11 +160,14 @@ Sub FindFocusOfType(ItemEffects, typeToFind, spellAffinity, destVar)
       /varset locationOfHighest ${currentLoc}
     }
   /next i
-  
+|/bc highestFoundID: ${highestFoundID}
   /if (${highestFoundID}) {
     /if (!${locationOfHighest.Find[->]}) {
-      /call #GetItemLink "${InvSlot[${locationOfHighest}].Item.Name}"
-      /varset ${destVar} ${Spell[${highestFoundID}]}: ${If[${DisplayType.Equal[Exists]},Exists,${highestFoundValue}]}${If[${DisplayType.Equal[Percent]},%,]} on ${Macro.Return}
+      |/call #GetItemLink "${InvSlot[${locationOfHighest}].Item.Name}"
+      |/varset ${destVar} ${Spell[${highestFoundID}]}: ${If[${DisplayType.Equal[Exists]},Exists,${highestFoundValue}]}${If[${DisplayType.Equal[Percent]},%,]} on ${Macro.Return}
+      /declare MyItemLink string local ${InvSlot[${locationOfHighest}].Item.ItemLink}
+      /varset ${destVar} ${Spell[${highestFoundID}]}: ${If[${DisplayType.Equal[Exists]},Exists,${highestFoundValue}]}${If[${DisplayType.Equal[Percent]},%,]} on ${MyItemLink}
+      |/bc ${destVar}
       |${If[${InvSlot[${locationOfHighest}].ID}>20, (Unequipped),]}
     } else {
       /declare itemPart string local ${locationOfHighest.Arg[1,->]}
@@ -171,11 +175,14 @@ Sub FindFocusOfType(ItemEffects, typeToFind, spellAffinity, destVar)
       |/echo ${locationOfHighest}
       |/echo itempart: ${itemPart}
       |/echo augpart: ${augPart}
-      /call #GetItemLink "${InvSlot[${itemPart}].Item.Item[${augPart}].Name}"
-      /declare augLink ${Macro.Return}
-      /call #GetItemLink "${InvSlot[${itemPart}].Item.Name}"
-      /declare itemLink ${Macro.Return}
+      |/call #GetItemLink "${InvSlot[${itemPart}].Item.Item[${augPart}].Name}"
+      |/declare augLink ${Macro.Return}
+      |/call #GetItemLink "${InvSlot[${itemPart}].Item.Name}"
+      |/declare itemLink ${Macro.Return}
+      /declare itemLink ${InvSlot[${itemPart}].Item.ItemLink}
+      /declare augLink ${InvSlot[${itemPart}].Item.Item[${augPart}].ItemLink}
       /varset ${destVar} ${Spell[${highestFoundID}]}: ${If[${DisplayType.Equal[Exists]},Exists,${highestFoundValue}]}${If[${DisplayType.Equal[Percent]},%,]} on ${augLink} in ${itemLink}
+      |/bc ${destVar}
       |${If[${InvSlot[${itemPart}].ID}>20, (Unequipped),]}
     }
   } else {
@@ -184,8 +191,10 @@ Sub FindFocusOfType(ItemEffects, typeToFind, spellAffinity, destVar)
 /return 
 
 Sub CheckFocusType(SpellID, CheckForType, spellAffinity, destVar)
+|/bc SpellID: ${SpellID} CheckForType: ${CheckForType} spellAffinity: ${spellAffinity} destVar: ${destVar}
   /declare SpellInfo string local
-  /varset SpellInfo ${Ini[${focusfinder_ini},Spells,ID${SpellID},]}
+  /varset SpellInfo ${Ini[${focusfinder_ini},Spells,ID${SpellID}]}
+|/bc SpellInfo: ${SpellInfo}
   /if (${SpellInfo.Length}) {
     /if (${SpellInfo.Arg[1,|].Equal[${CheckForType}]} && (${SpellInfo.Arg[4,|].Equal[${spellAffinity}]} || ${SpellInfo.Arg[4,|].Equal[Both]} || ${SpellInfo.Arg[4,|].Equal[All]})) {
       /varset ${destVar} ${SpellInfo.Arg[3,|]}

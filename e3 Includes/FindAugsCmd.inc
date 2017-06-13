@@ -162,6 +162,7 @@ Sub DisplayIfItemAugWhiteListed(augname, itemName)
 /return
 
 Sub ForEachItem(callback)
+|/bc ForEachItem ${callback}
   /declare packSlot int local
   /declare index int local
   /declare itemName string local
@@ -170,14 +171,20 @@ Sub ForEachItem(callback)
   /declare augs int local
 
   /for index 23 to 30
+|/bc index: ${index}
     /if (${Me.Inventory[${index}].Container}) {
-      /for packSlot 1 to 10
+      /for packSlot 1 to ${Me.Inventory[${index}].Container}
         /if (${Me.Inventory[${index}].Item[${packSlot}].ID} && ${Me.Inventory[${index}].Item[${packSlot}].Augs} > 0) {
-          /varset augcount ${Me.Inventory[${index}].Augs}
+
+          /varset augcount ${Me.Inventory[${index}].Item[${packSlot}].Augs}
           /for augs 1 to ${augcount}
-            /varset augName ${Me.Inventory[${index}].Item[${packSlot}].Item[${augs}]}
-            /varset itemName ${Me.Inventory[${index}].Item[${packSlot}].Name}
-            /call ${callback} "${augName}" "${itemName}"
+            /if (${Me.Inventory[${index}].Item[${packSlot}].Item[${augs}].ID}) {
+              /varset augName ${Me.Inventory[${index}].Item[${packSlot}].Item[${augs}]}
+              /varset itemName ${Me.Inventory[${index}].Item[${packSlot}].Name}
+|  /bc i: ${index} p: ${packSlot} a: ${augs} [${Me.Inventory[${index}].Name}] [${Me.Inventory[${index}].Item[${packSlot}].Name}] ${Me.Inventory[${index}].Item[${packSlot}].Augs}
+|  /bc call ${callback} "${augName}" "${itemName}"
+              /call ${callback} "${augName}" "${itemName}"
+            }
           /next augs
         }
       /next packSlot
@@ -185,9 +192,11 @@ Sub ForEachItem(callback)
       /if (${Me.Inventory[${index}].ID} && ${Me.Inventory[${index}].Augs} > 0) {
         /varset augcount ${Me.Inventory[${index}].Augs}
         /for augs 1 to ${augcount}
-          /varset augName ${Me.Inventory[${index}].Item[${augs}]}
-          /varset itemName ${Me.Inventory[${index}].Name}
-          /call ${callback} "${augName}" "${itemName}"
+          /if (${Me.Inventory[${index}].Item[${augs}].ID}) {
+            /varset augName ${Me.Inventory[${index}].Item[${augs}]}
+            /varset itemName ${Me.Inventory[${index}].Name}
+            /call ${callback} "${augName}" "${itemName}"
+          }
         /next augs
       }
     }
@@ -201,7 +210,7 @@ Sub Event_FindAugedCmd(line, ChatSender, eventParams)
 	/varset ChatSender ${Macro.Return.Arg[1,_]}
 	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
 	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-  		/if (!${Defined[facReturn]}) /declare facReturn string outer
+  	/if (!${Defined[facReturn]}) /declare facReturn string outer
 		/call ForEachItem DisplayIfItemAugWhiteListed
 	} else {
 	}
