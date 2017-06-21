@@ -30,7 +30,7 @@ Sub Event_AugReport(line, chatSender, args)
   |/call #QuickSort AR:AugArray 1 ${AugCount} .Arg[2,:]
   |/call #QuickSort AR:AugArray 1 ${AugCount} .Arg[1,:]
 
-  /mergesort AR:AugArray "${Math.Calc[${%%.Arg[1,:]} * 1000].Int}"
+  /mergesort AR:AugArray "${Math.Calc[${%%.Arg[1,:]}].Int}"
   |/call #PrintArray AR:AugArray
   |/return
 

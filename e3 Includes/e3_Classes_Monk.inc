@@ -20,6 +20,20 @@ Sub MNK_Background_Events
   }
 /return
 
+Sub check_MNKAggroControl
+/if (${Debug}) /echo |- MNK_AggroControl ==>
+|only use evade over 80% aggro, and only if im using a disc (burning)
+	/if (${Me.PctAggro} > 60 && ${Me.AbilityReady[Feign Death]}) {
+		/attack off
+		/delay 1s !${Me.Combat}
+		/doability "Feign Death"
+		/delay 5 ${Me.Feigning}
+		/stand
+		/attack on
+	}
+/if (${Debug}) /echo <== MNK_AggroControl -|
+/return
+
 SUB MNK_MacroSettings
 /if (${Debug}) /echo |- MNK_MacroSettings ==>
 	/call WriteToIni "${advSettings_Ini},MNK Functions,MNK Function" "check_Burns" 1

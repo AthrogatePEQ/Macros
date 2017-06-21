@@ -64,6 +64,20 @@ SUB check_manaDump
 /if (${Debug}) /echo <== check_manaDump -|
 /RETURN
 
+Sub check_NECAggroControl
+/if (${Debug}) /echo |- MNK_AggroControl ==>
+|only use evade over 80% aggro, and only if im using a disc (burning)
+	/if (${Me.PctAggro} > 60 && ${Me.AltAbilityReady[Death Peace]}) {
+		/attack off
+		/delay 1s !${Me.Combat}
+		/casting "Death Peace"
+		/delay 5 ${Me.Feigning}
+		/stand
+		/attack on
+	}
+/if (${Debug}) /echo <== MNK_AggroControl -|
+/return
+
 Sub NEC_Setup
 /if (${Debug}) /echo |- NEC_Setup ==>
 	/if (${Ini[${Character_Ini},${Me.Class},Lich Spell].Length}) /call IniToVar "${Character_Ini},${Me.Class},Lich Spell" lichSpell string outer

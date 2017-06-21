@@ -187,35 +187,6 @@ SUB EVENT_RecoverCorpses(line, ChatSender, eventParams)
 /if (${Debug}) /echo <== EVENT_RecoverCorpses -|
 /RETURN
 
-|----------------------------------------|
-|- Arms MGB on all bots who are able.	  -|
-|- Use, /bc MGB, or /tell 'Name' [MGB]	-|
-|----------------------------------------|
-#EVENT MGB "[#1#] Mass Group Buff"
-#EVENT MGB "<#1#> Mass Group Buff#2#"
-#EVENT MGB "#1# tells you, 'Mass Group Buff'"
-#EVENT MGB "#1# tells the group, 'Mass Group Buff'"
-#EVENT MGB "#1# tell your party, 'Mass Group Buff'"
-SUB EVENT_MGB(line, ChatSender, eventParams)
-/if (${Debug}) /echo |- EVENT_MGB ==>
-	| -Verify the event
-	/call verifyEvent "${ChatSender}" "${line}"
-	/if (${Defined[ChatSender]}) /varset ChatSender ${Macro.Return.Arg[1,_]}
-	|    |-----------Valid User----------|    |--------Included Bot-----------|    |-----------In Zone-------------|    |------------In Range------------|
-	/if (${Bool[${Macro.Return.Arg[2,_]}]} && ${Bool[${Macro.Return.Arg[3,_]}]} && ${Bool[${Macro.Return.Arg[4,_]}]} && ${Bool[${Macro.Return.Arg[5,_]}]}) {
-		| -Check AA is ready.
-		/if (${Me.AltAbility[Mass Group Buff]}) {
-			/if (!${Me.AltAbilityReady[Mass Group Buff]}) {
-				/docommand ${ChatToggle} [Mass Group Buff] is not ready.
-      } else {
-        /if (${Twist.Twisting}) /call pauseTwist
-        /casting "Mass Group Buff" -maxtries|3
-      }
-		}
-	}
-/if (${Debug}) /echo <== EVENT_GateToLobby -|
-/RETURN
-
 |--------------------------------------------------------|
 |- Uses 'Throne of Heroes', on all bots who are able.	-|
 |--------------------------------------------------------|
@@ -248,7 +219,6 @@ SUB EVENT_GateToLobby(line, ChatSender, eventParams)
 SUB vetAA_Background_Events
 	/doevents Lessons
 	/doevents GateToLobby
-	/doevents MGB
 	/doevents RecoverCorpses
 	/doevents Armor
 	/doevents Intensity
